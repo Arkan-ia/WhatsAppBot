@@ -1,12 +1,14 @@
-#whatsappbot/whatsappbot.py
+#whatsappbot.py
 import json
 import time
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional
-
 import openai
 import requests
+
+MODEL = 'gpt-4o-mini'
+LOCATION = 'Pasto - Boyacá - Colombia'
 
 
 class WhatsAppBot:
@@ -36,7 +38,7 @@ class WhatsAppBot:
     # User Data Management Methods
 
     def save_user_data(
-        self, number: str, name: Optional[str] = None, information: Optional[str] = None
+        self, number: str, name: Optional[str] = None, order: Optional[str] = None, address: Optional[str] = None
     ) -> None:
         """
         Save or update user data.
@@ -44,26 +46,31 @@ class WhatsAppBot:
         Args:
             number (str): The user's phone number.
             name (Optional[str]): The user's name.
-            information (Optional[str]): Additional information from the user.
+            order (Optional[str]): The user's order.
+            address (Optional[str]): The user's address.
         """
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if number not in self.usuarios:
             self.usuarios[number] = {
                 "nombre": name,
-                "information": [information] if information else [],
+                "order": order,
+                "address": address,
                 "timestamp": current_time,
                 "telefono": number,
             }
         else:
             if name:
-                self.usuarios[number]["nombre"] = name
-            if information:
-                self.usuarios[number].setdefault("information", []).append(information)
+                self.usuarios[number]["name"] = name
+            if order:
+                self.usuarios[number]["order"] = order
+            if address:
+                self.usuarios[number]["address"] = address
 
             self.usuarios[number]["timestamp"] = current_time
 
         logging.debug(f"Updated user data: {self.usuarios[number]}")
+
 
     def get_user_data(self, number: str) -> Dict:
         """
@@ -394,106 +401,7 @@ class WhatsAppBot:
         # Extend this method for other media types if necessary
         return None
 
-    # GPT-4 Integration Methods
 
-    def validate_input_with_gpt(
-        self, input_text: str, validation_type: str
-    ) -> bool:
-        """
-        Use GPT-4 to validate if the input is a valid name or entity.
-
-        Args:
-            input_text (str): The user's input text.
-            validation_type (str): The type of validation ('nombre' or 'entidad').
-
-        Returns:
-            bool: True if valid, False otherwise.
-        """
-        if validation_type == "nombre":
-            system_prompt = (
-                "You are a validator for names. Respond with 'TRUE' if the input is a name and 'FALSE' otherwise."
-            )
-            prompt = f"Is '{input_text}' a valid name?"
-        elif validation_type == "entidad":
-            system_prompt = (
-                "You are a validator for entities. Respond with 'TRUE' if the input is a valid entity and 'FALSE' otherwise."
-            )
-            prompt = f"Is '{input_text}' a valid entity?"
-        else:
-            logging.warning(f"Unknown validation type: {validation_type}")
-            return False
-
-        try:
-            validation_response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=5,
-                temperature=0,
-            )
-            response_text = (
-                validation_response["choices"][0]["message"]["content"].strip().lower()
-            )
-            return response_text == "true"
-        except Exception as e:
-            logging.exception(f"Error with OpenAI API during validation: {e}")
-            return False
-
-    def generate_llm_response(
-        self,
-        user_message: str,
-        conversation_state: str,
-        user_data: Dict,
-        validation_success: bool = True,
-    ) -> str:
-        """
-        Generate a response using GPT-4 based on the conversation state.
-
-        Args:
-            user_message (str): The user's message.
-            conversation_state (str): The current state of the conversation.
-            user_data (Dict): The user's data.
-            validation_success (bool): Whether the previous validation was successful.
-
-        Returns:
-            str: The generated response text.
-        """
-        system_prompt = (
-            "You are an assistant who speaks informally and directly. Respond in a friendly tone."
-        )
-
-        if conversation_state == "solicitar_nombre":
-            prompt = "Ask the user for their name in a friendly tone."
-        elif conversation_state == "esperando_nombre":
-            if validation_success:
-                prompt = "Thank the user for their name and ask them what they are looking for."
-            else:
-                prompt = "Request the user's name again as their previous input was invalid."
-        elif conversation_state == "esperando_information":
-            if validation_success:
-                prompt = "Thank the user for providing the information and ask if they need anything else."
-            else:
-                prompt = "Ask the user to provide a valid entity."
-        else:
-            prompt = f"Handle the user's message: '{user_message}' in a friendly tone."
-
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=150,
-                temperature=0.3,
-            )
-            return response["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            logging.exception(f"Error with OpenAI API during response generation: {e}")
-            return "Sorry, there was a system error. Please try again."
-    # GPT-4 Integration Methods
 
     def interpret_user_message(self, user_message: str) -> tuple:
         """
@@ -515,7 +423,7 @@ class WhatsAppBot:
 
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model=MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -548,14 +456,17 @@ class WhatsAppBot:
             bool: True if the user is requesting a PDF, False otherwise.
         """
         system_prompt = (
-            "You are an assistant that helps determine if the user is requesting a menu, prices, catalog, or something related. "
-            "Respond only with 'Yes' or 'No'. Do not add any additional text."
+            "Eres un asistente que determina si el usuario está solicitando explícitamente ver el menú o el PDF del menú. "
+            "Responde solo con 'TRUE' o 'FALSE'. No agregues ningún texto adicional. "
+            "Responde 'TRUE' solo si el usuario está pidiendo explícitamente ver el menú o el PDF del menú. "
+            "Ejemplos de 'TRUE': 'Envíame el menú', 'Quiero ver el menú', 'Me puedes enviar el menú en PDF?'. "
+            "Ejemplos de 'FALSE': '¿Qué ingredientes tiene la Montañera?', '¿Cuánto cuesta la hamburguesa clásica?'."
         )
-        prompt = f"The user has said: '{user_message}'.\nIs the user requesting a menu, prices, catalog, or something related?"
-        
+        prompt = f"El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente ver el menú o el PDF del menú? Responde 'TRUE' o 'FALSE'."
+
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model=MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -564,8 +475,9 @@ class WhatsAppBot:
                 temperature=0
             )
             response_text = response['choices'][0]['message']['content'].strip().lower()
-            logging.debug(f"PDF request validation response: '{response_text}'")
-            is_requesting = response_text.startswith('yes')
+            logging.info(f"User message: '{user_message}'")
+            logging.info(f"GPT-4 response: '{response_text}'")
+            is_requesting = response_text == 'true'
             return is_requesting
         except Exception as e:
             logging.exception(f"Error with OpenAI API during PDF request validation: {e}")
