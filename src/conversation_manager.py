@@ -1,4 +1,5 @@
 
+import json
 import logging
 import os
 import random
@@ -21,17 +22,47 @@ class ConversationManager:
         self.bot = bot
         self.pdf_manager = pdf_manager
         self.boyaco_expressions = [
-            "qué más, pues?",
-            "cómo le va?",
-            "hágale, pues.",
-            "qué se cuenta?",
-            "eso es",
-            "de una",
-            "listo, pues",
-            "claro, mijo",
-            "a la orden",
-            "con gusto"
+            "sapo que le importa"
         ]
+
+    def is_requesting_pdf(self, user_message: str) -> bool:
+        """
+        Determines if the user is requesting a PDF (menu, prices, catalog) using GPT-4.
+
+        Args:
+            user_message (str): The user's message.
+
+        Returns:
+            bool: True if the user is requesting a PDF, False otherwise.
+        """
+        system_prompt = (
+            "Eres un asistente que determina si el usuario está solicitando explícitamente ver el menú o el PDF del menú. "
+            "Responde solo con 'TRUE' o 'FALSE'. No agregues ningún texto adicional. "
+            "Responde 'TRUE' solo si el usuario está pidiendo explícitamente ver el menú, la carta, los productos o el PDF del menú. "
+            "Ejemplos de 'TRUE': 'Envíame el menú', 'Quiero ver el menú', 'Me puedes enviar el menú en PDF?'. "
+            "Ejemplos de 'FALSE': '¿Qué ingredientes tiene la Montañera?', '¿Cuánto cuesta la hamburguesa clásica?'."
+        )
+        prompt = f"El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente ver el menú o el PDF del menú? Responde 'TRUE' o 'FALSE'."
+
+        try:
+            response = openai.ChatCompletion.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=3,
+                temperature=0
+            )
+            response_text = response['choices'][0]['message']['content'].strip().lower()
+            logging.info(f"User message: '{user_message}'")
+            logging.info(f"GPT-4 response: '{response_text}'")
+            is_requesting = response_text == 'true'
+            return is_requesting
+        except Exception as e:
+            logging.exception(f"Error with OpenAI API during PDF request validation: {e}")
+            return False
+
 
     def handle_incoming_message(self, message: Dict[str, Any]):
         text = self.bot.get_whatsapp_message(message)
@@ -46,7 +77,7 @@ class ConversationManager:
         current_state = self.bot.get_conversation_state(number)
         user_data = self.bot.get_user_data(number)
 
-        if self.bot.is_requesting_pdf(text):
+        if self.is_requesting_pdf(text):
             self._send_menu_pdf(number)
             response = "Te he enviado nuestro menú en PDF. ¿Qué te gustaría saber sobre algún plato en particular?"
         else:
@@ -102,3 +133,48 @@ class ConversationManager:
             f"Restricciones: {prompts.RESTRICTIONS}"
             "Información del menú: " + self.pdf_manager.content + " "
         )
+    
+    
+    def interpret_user_message(self, user_message: str) -> tuple:
+        """
+        Uses GPT-4 to interpret the user's message and determine their intent.
+        Returns a tuple (intent, entity), where 'intent' can be 'affirmative', 'negative', 'provide_entity', or 'other'.
+        If 'intent' is 'provide_entity', 'entity' will contain the name of the entity; otherwise, it will be None.
+        """
+        system_prompt = (
+            "Eres un asistente que interpreta mensajes de usuarios para determinar su intención. "
+            "Las posibles intenciones son: 'affirmative' si el usuario está diciendo que sí o afirmando; "
+            "'negative' si el usuario está diciendo que no o negando; "
+            "'provide_entity' si el usuario está mencionando una nueva entidad que necesita; "
+            "o 'other' si el mensaje no encaja en las anteriores. "
+            "Responde únicamente con un JSON en el siguiente formato:\n"
+            '{"intent": "intention", "entity": "entity_name_or_null"}\n'
+            "Si la intención es 'provide_entity', incluye la 'entity' mencionada; de lo contrario, 'entity' debe ser null."
+        )
+        prompt = f"El usuario ha dicho: '{user_message}'.\nDetermina su intención y responde en el formato indicado."
+
+        try:
+            response = openai.ChatCompletion.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=100,
+                temperature=0.0
+            )
+            response_text = response['choices'][0]['message']['content'].strip()
+            print(f"Interpretation of user message: '{response_text}'")  
+
+            # Parse the JSON response
+            result = json.loads(response_text)
+            intent = result.get('intent', 'other')
+            entity = result.get('entity', None)
+            if entity == 'null':
+                entity = None
+            return intent, entity
+        except Exception as e:
+            print(f"Error interpreting user message: {e}")
+            return 'other', None
+    
+    
