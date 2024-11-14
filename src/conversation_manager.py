@@ -22,7 +22,16 @@ class ConversationManager:
         self.bot = bot
         self.pdf_manager = pdf_manager
         self.boyaco_expressions = [
-            "sapo que le importa"
+            "qué más, pues?",
+            "cómo le va?",
+            "hágale, pues.",
+            "qué se cuenta?",
+            "eso es",
+            "de una",
+            "listo, pues",
+            "claro, mijo",
+            "a la orden",
+            "con gusto"
         ]
 
     def is_requesting_pdf(self, user_message: str) -> bool:
@@ -65,6 +74,14 @@ class ConversationManager:
 
 
     def handle_incoming_message(self, message: Dict[str, Any]):
+        message_type = message["type"]
+        
+        if message_type == "image":
+            id = message["image"]["id"]
+            image = self.bot.get_media(id)
+            self.answer_image("", image)
+            
+            
         text = self.bot.get_whatsapp_message(message)
         number = message['from']
         message_id = message.get('id', None)
@@ -177,4 +194,24 @@ class ConversationManager:
             print(f"Error interpreting user message: {e}")
             return 'other', None
     
-    
+    def answer_image(self, question, image_url):
+        response = openai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What’s in this image?"},
+                {
+                "type": "image_url",
+                "image_url": {
+                    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+                },
+                },
+            ],
+            }
+        ],
+        max_tokens=300,
+        )
+        
+        return response

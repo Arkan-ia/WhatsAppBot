@@ -1,10 +1,8 @@
 #whatsappbot.py
 import json
-import time
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional
-import openai
 import requests
 
 MODEL = 'gpt-4o-mini'
@@ -338,5 +336,12 @@ class WhatsAppBot:
             return self.stickers.get(media_name)
         # Extend this method for other media types if necessary
         return None
+    
+    def get_media(self, id: str):
+        answer = requests.post(f"https://graph.facebook.com/v21.0/{id}/", headers=self.headers)
+        url = answer["url"]
+        
+        image = requests.get(url, headers=self.headers)
+        return image
 
 
