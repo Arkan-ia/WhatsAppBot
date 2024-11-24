@@ -15,6 +15,6 @@ def send_whatsapp_notification(bot, number: str, message: Dict[str, Any]) -> Non
     """
     try:
         bot.send_whatsapp_message(message)
-        logging.info(f"Notification sent to {number}")
+        print(f"Notification sent to {number}")
     except Exception as e:
         logging.error(f"Failed to send notification to {number}: {str(e)}")

@@ -33,6 +33,31 @@ class WhatsAppBot:
         self.estados_conversacion: Dict[str, str] = {}
         self.stickers = stickers or {}
 
+        print("api_url: ", self.api_url)
+        print("token: ", self.token)
+
+    def start_conversation(self, template: str, to_number: str) -> None:
+        data = {
+            "messaging_product": "whatsapp",
+            "to": to_number,
+            "type": "template",
+            "template": {
+                "name": template,
+                "language": {
+                    "code": "es"
+                }
+            },
+        }
+        try:
+            response = requests.post(self.api_url, headers=self.headers, data=data)
+
+            if response.status_code == 200:
+                print(f"Message sent successfully to {to_number}")
+            else:
+                logging.error(f"Failed to send message to {to_number}: {response.text}")
+        except Exception as e:
+            logging.exception(f"Exception occurred while sending message: {e}")
+
     # Conversation State Management Methods
 
     def update_conversation_state(self, number: str, state: str) -> None:
@@ -100,7 +125,7 @@ class WhatsAppBot:
             response = requests.post(self.api_url, headers=self.headers, data=data)
 
             if response.status_code == 200:
-                logging.info("Message sent successfully.")
+                print("Message sent successfully.")
             else:
                 logging.error(
                     f"Error sending message: {response.status_code}, {response.text}"
@@ -194,6 +219,8 @@ class WhatsAppBot:
             }
         )
         return data
+
+
 
     def list_reply_message(
         self, number: str, options: List[str], body: str, footer: str, session_id: str

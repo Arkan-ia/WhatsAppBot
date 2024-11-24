@@ -1,3 +1,0 @@
-token = 'spiralabs'
-whatsapp_token = 'EAAGgx3lKGfQBO4YUQ7hLSxVzbZBMH2gvgGAHay0sdnKu1gjsUib1Hx41lJHPcN6nZBJqHuNvzOUYJfPPXmCQo8iHcgJtuC4mCZAnCqmXWRXxuZCLKHZC7TviMewAZCQ4FNgNmRMJYxtZCBKoFw2sT99rKLmqAju1CHGE79rkKRsZCcj1VA4d4G3l22vOAK1kKTnfrXO42sW2ZAJByaKWG0royZCphQXmsvLyAjMk35EqIZD'
-whatsapp_url = 'https://graph.facebook.com/v20.0/400692489794103/messages'

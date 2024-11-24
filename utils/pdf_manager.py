@@ -2,7 +2,7 @@
 import io
 from typing import Any, Dict, List
 import PyPDF2
-import openai
+from openai import OpenAI
 import requests
 
 
@@ -11,6 +11,7 @@ class PDFManager:
         self.pdf_url = pdf_url
         self.content = self._extract_pdf_content()
         self.indexed_content = self._index_content()
+        self.client = OpenAI()
 
     def _extract_pdf_content(self) -> str:
         response = requests.get(self.pdf_url)
@@ -27,9 +28,9 @@ class PDFManager:
         return indexed_content
 
     def _get_embedding(self, text: str) -> List[float]:
-        response = openai.Embedding.create(input=text, model="text-embedding-ada-002")
-        return response['data'][0]['embedding']
-
+        response = OpenAI().embeddings.create(input=text, model="text-embedding-ada-002")
+        return response.data[0].embedding
+    
     def retrieve_relevant_sections(self, query: str) -> List[str]:
         query_embedding = self._get_embedding(query)
         similarities = [(self._cosine_similarity(query_embedding, section['embedding']), section['text']) for section in self.indexed_content]

@@ -5,9 +5,9 @@ import os
 import random
 from typing import Any, Dict, List
 
-import prompts
-
-import openai
+from src.data_management import get_user_data
+import src.prompts as prompts
+from openai import OpenAI
 from utils.pdf_manager import PDFManager
 from src.whatsappbot import WhatsAppBot
 
@@ -16,6 +16,8 @@ NAME = 'Brayan'
 COMPANY = 'La Rejana Callejera'
 LOCATION = 'Pasto - Boyacá - Colombia'
 TEMA = 'Restaurante - Comida'
+
+client = OpenAI()
 
 class ConversationManager:
     def __init__(self, bot: WhatsAppBot, pdf_manager: PDFManager):
@@ -54,7 +56,7 @@ class ConversationManager:
         prompt = f"El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente ver el menú o el PDF del menú? Responde 'TRUE' o 'FALSE'."
 
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model=MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -63,9 +65,9 @@ class ConversationManager:
                 max_tokens=3,
                 temperature=0
             )
-            response_text = response['choices'][0]['message']['content'].strip().lower()
-            logging.info(f"User message: '{user_message}'")
-            logging.info(f"GPT-4 response: '{response_text}'")
+            response_text = response.choices[0].message.content.strip().lower()
+            print(f"User message: '{user_message}'")
+            print(f"GPT-4 response: '{response_text}'")
             is_requesting = response_text == 'true'
             return is_requesting
         except Exception as e:
@@ -85,14 +87,14 @@ class ConversationManager:
         text = self.bot.get_whatsapp_message(message)
         number = message['from']
         message_id = message.get('id', None)
-        logging.info(f"User message from {number}: {text}")
+        print(f"User message from {number}: {text}")
 
         list_messages = []
         mark_read = self.bot.mark_read_message(message_id)
         list_messages.append(mark_read)
 
         current_state = self.bot.get_conversation_state(number)
-        user_data = self.bot.get_user_data(number)
+        user_data = get_user_data(number)
 
         if self.is_requesting_pdf(text):
             self._send_menu_pdf(number)
@@ -106,7 +108,7 @@ class ConversationManager:
 
         for item in list_messages:
             self.bot.send_whatsapp_message(item)
-            logging.info("Message sent.")
+            print("Message sent.")
 
     def _send_menu_pdf(self, number: str):
         pdf_url = os.getenv('DOCUMENT_URL')
@@ -114,13 +116,13 @@ class ConversationManager:
         filename = 'Menu.pdf'
         document = self.bot.document_message(number, pdf_url, caption, filename)
         self.bot.send_whatsapp_message(document)
-        logging.info(f"Menu PDF sent to {number}")
+        print(f"Menu PDF sent to {number}")
 
     def _generate_response_from_sections(self, query: str, sections: List[str], user_data: Dict[str, Any]) -> str:
         context = " ".join(sections)
         prompt = f"Contexto: {context}\nPregunta: {query}\nRespuesta:"
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model=MODEL,
                 messages=[
                     {"role": "system", "content": self._get_system_prompt(user_data)},
@@ -129,7 +131,7 @@ class ConversationManager:
                 max_tokens=150,
                 temperature=0.1
             )
-            return response['choices'][0]['message']['content'].strip()
+            return response.choices[0].message.content.strip()
         except Exception as e:
             logging.exception(f"Error with OpenAI API: {e}")
             return "Lo siento, parece que hubo un problema en el sistema. Por favor, escribe tu mensaje de nuevo."
@@ -171,7 +173,7 @@ class ConversationManager:
         prompt = f"El usuario ha dicho: '{user_message}'.\nDetermina su intención y responde en el formato indicado."
 
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model=MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -180,7 +182,7 @@ class ConversationManager:
                 max_tokens=100,
                 temperature=0.0
             )
-            response_text = response['choices'][0]['message']['content'].strip()
+            response_text = response.choices[0].message.content.strip()
             print(f"Interpretation of user message: '{response_text}'")  
 
             # Parse the JSON response
@@ -195,7 +197,7 @@ class ConversationManager:
             return 'other', None
     
     def answer_image(self, question, image_url):
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {

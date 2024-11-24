@@ -2,9 +2,10 @@ from datetime import datetime
 import logging
 from typing import Dict, Optional
 
+usuarios = {}
 
 def save_user_data(
-        self, number: str, name: Optional[str] = None, order: Optional[str] = None, address: Optional[str] = None
+         number: str, name: Optional[str] = None, order: Optional[str] = None, address: Optional[str] = None
 ) -> None:
     """
     Save or update user data.
@@ -17,8 +18,8 @@ def save_user_data(
     """
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    if number not in self.usuarios:
-        self.usuarios[number] = {
+    if number not in usuarios:
+        usuarios[number] = {
             "nombre": name,
             "order": order,
             "address": address,
@@ -27,18 +28,18 @@ def save_user_data(
         }
     else:
         if name:
-            self.usuarios[number]["name"] = name
+            usuarios[number]["name"] = name
         if order:
-            self.usuarios[number]["order"] = order
+            usuarios[number]["order"] = order
         if address:
-            self.usuarios[number]["address"] = address
+            usuarios[number]["address"] = address
 
-        self.usuarios[number]["timestamp"] = current_time
+        usuarios[number]["timestamp"] = current_time
 
-    logging.debug(f"Updated user data: {self.usuarios[number]}")
+    logging.debug(f"Updated user data: {usuarios[number]}")
 
 
-def get_user_data(self, number: str) -> Dict:
+def get_user_data( number: str) -> Dict:
     """
     Retrieve user data.
 
@@ -48,9 +49,9 @@ def get_user_data(self, number: str) -> Dict:
     Returns:
         Dict: The user's data dictionary.
     """
-    return self.usuarios.get(number, {})
+    return usuarios.get(number, {})
 
-def is_user_info_missing(self, number: str) -> bool:
+def is_user_info_missing( number: str) -> bool:
     """
     Check if the user is missing required information.
 
@@ -60,5 +61,12 @@ def is_user_info_missing(self, number: str) -> bool:
     Returns:
         bool: True if information is missing, False otherwise.
     """
-    usuario = self.usuarios.get(number, {})
+    usuario = usuarios.get(number, {})
     return not usuario.get("nombre") or not usuario.get("information")
+
+
+def get_whatsapp_token(from_id: str) -> str:
+    # Esta función debería consultar una base de datos.
+    print("from_id: ", from_id)
+    if from_id == "541794965673706":
+        return "EAAFcOeGfUCEBO4ZAEeQhrAghK6M7R3PZA9yjyU96pehgNZCyWB0TWEOCJB93Ukdcy1XGCrBjUZCgE4CG6um0EW64NYPed4zdQTQxaGsShnZBgZC0Q4UxhgtqnmgRkZCeFfPL5KM0WoTRKk4wfmTUVnoHENFov8vu5u9jesswSQFxmiroOLV0yPZAdywQXx8Ta1j7mgZDZD"
