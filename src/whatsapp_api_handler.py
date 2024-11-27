@@ -2,14 +2,16 @@
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import requests
+
+from db.firebase import upload_media_to_storage
 
 MODEL = 'gpt-4o-mini'
 LOCATION = 'Pasto - Boyacá - Colombia'
 
 
-class WhatsAppBot:
+class WhatsAppAPIHandler:
     """
     A class to interact with the WhatsApp API and manage chatbot conversations.
     """
@@ -29,12 +31,7 @@ class WhatsAppBot:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.token}",
         }
-        self.usuarios: Dict[str, Dict] = {}
-        self.estados_conversacion: Dict[str, str] = {}
         self.stickers = stickers or {}
-
-        print("api_url: ", self.api_url)
-        print("token: ", self.token)
 
     def start_conversation(self, template: str, to_number: str) -> None:
         data = {
@@ -57,31 +54,6 @@ class WhatsAppBot:
                 logging.error(f"Failed to send message to {to_number}: {response.text}")
         except Exception as e:
             logging.exception(f"Exception occurred while sending message: {e}")
-
-    # Conversation State Management Methods
-
-    def update_conversation_state(self, number: str, state: str) -> None:
-        """
-        Update the conversation state for a user.
-
-        Args:
-            number (str): The user's phone number.
-            state (str): The new conversation state.
-        """
-        self.estados_conversacion[number] = state
-        logging.debug(f"Conversation state updated for {number}: {state}")
-
-    def get_conversation_state(self, number: str) -> Optional[str]:
-        """
-        Get the current conversation state for a user.
-
-        Args:
-            number (str): The user's phone number.
-
-        Returns:
-            Optional[str]: The current conversation state.
-        """
-        return self.estados_conversacion.get(number)
 
     # Message Handling Methods
 
@@ -365,10 +337,23 @@ class WhatsAppBot:
         return None
     
     def get_media(self, id: str):
-        answer = requests.post(f"https://graph.facebook.com/v21.0/{id}/", headers=self.headers)
-        url = answer["url"]
-        
-        image = requests.get(url, headers=self.headers)
-        return image
+        answer = requests.get(f"https://graph.facebook.com/v21.0/{id}/", headers=self.headers)
+        if answer.status_code == 200:
+            answer = answer.json()
+            print("answer: ", answer)
+            url = answer["url"]
 
+            image = requests.get(url, headers=self.headers)
+            
+            return upload_media_to_storage(image, id)
+        else:
+            raise Exception(f"Error getting media: {answer.status_code}, {answer.text}")
+    
+    # Utility methods
+    def handle_incoming_message(self, message: Dict[str, Any]):                
+        text = self.get_whatsapp_message(message)
+        message_id = message.get('id', None)
+
+        return self.mark_read_message(message_id)
+            
 

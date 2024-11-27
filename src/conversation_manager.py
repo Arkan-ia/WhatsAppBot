@@ -1,40 +1,23 @@
-
 import json
 import logging
-import os
-import random
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from models.chatbot import ChatbotModel
 from src.data_management import get_user_data
 import src.prompts as prompts
 from openai import OpenAI
 from utils.pdf_manager import PDFManager
-from src.whatsappbot import WhatsAppBot
-
-MODEL = 'gpt-4o-mini'
-NAME = 'Brayan'
-COMPANY = 'La Rejana Callejera'
-LOCATION = 'Pasto - Boyacá - Colombia'
-TEMA = 'Restaurante - Comida'
+from src.whatsapp_api_handler import WhatsAppAPIHandler
 
 client = OpenAI()
 
 class ConversationManager:
-    def __init__(self, bot: WhatsAppBot, pdf_manager: PDFManager):
-        self.bot = bot
+    def __init__(self, whatsapp_api_handler: WhatsAppAPIHandler, pdf_manager: PDFManager, chatbot: ChatbotModel):
+        self.whatsapp_api_handler = whatsapp_api_handler
+        self.MODEL = 'gpt-4o-mini'
         self.pdf_manager = pdf_manager
-        self.boyaco_expressions = [
-            "qué más, pues?",
-            "cómo le va?",
-            "hágale, pues.",
-            "qué se cuenta?",
-            "eso es",
-            "de una",
-            "listo, pues",
-            "claro, mijo",
-            "a la orden",
-            "con gusto"
-        ]
+        self.estados_conversacion = {}
+        self.chatbot = chatbot
 
     def is_requesting_pdf(self, user_message: str) -> bool:
         """
@@ -57,7 +40,7 @@ class ConversationManager:
 
         try:
             response = client.chat.completions.create(
-                model=MODEL,
+                model=self.MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -74,48 +57,77 @@ class ConversationManager:
             logging.exception(f"Error with OpenAI API during PDF request validation: {e}")
             return False
 
+        # Conversation State Management Methods
+
+    def update_conversation_state(self, number: str, state: str) -> None:
+        """
+        Update the conversation state for a user.
+
+        Args:
+            number (str): The user's phone number.
+            state (str): The new conversation state.
+        """
+        self.estados_conversacion[number] = state
+        logging.debug(f"Conversation state updated for {number}: {state}")
+
+    def get_conversation_state(self, number: str) -> Optional[str]:
+        """
+        Get the current conversation state for a user.
+
+        Args:
+            number (str): The user's phone number.
+
+        Returns:
+            Optional[str]: The current conversation state.
+        """
+        return self.estados_conversacion.get(number)
+
 
     def handle_incoming_message(self, message: Dict[str, Any]):
         message_type = message["type"]
-        
-        if message_type == "image":
-            id = message["image"]["id"]
-            image = self.bot.get_media(id)
-            self.answer_image("", image)
-            
-            
-        text = self.bot.get_whatsapp_message(message)
+                
+        text = self.whatsapp_api_handler.get_whatsapp_message(message)
         number = message['from']
         message_id = message.get('id', None)
         print(f"User message from {number}: {text}")
 
+        mark_read = self.whatsapp_api_handler.mark_read_message(message_id)
+        
         list_messages = []
-        mark_read = self.bot.mark_read_message(message_id)
         list_messages.append(mark_read)
 
-        current_state = self.bot.get_conversation_state(number)
+        current_state = self.get_conversation_state(number)
         user_data = get_user_data(number)
 
-        if self.is_requesting_pdf(text):
+        if message_type == "image":
+            print("is image")
+            print(message["image"])
+            id = message["image"]["id"]
+            image_url = self.whatsapp_api_handler.get_media(id)
+            #image_url = upload_media_to_storage(image)
+            response = self.answer_image("", image_url)
+            print(response)
+
+        elif self.is_requesting_pdf(text):
             self._send_menu_pdf(number)
             response = "Te he enviado nuestro menú en PDF. ¿Qué te gustaría saber sobre algún plato en particular?"
         else:
             relevant_sections = self.pdf_manager.retrieve_relevant_sections(text)
             response = self._generate_response_from_sections(text, relevant_sections, user_data)
 
-        text_message = self.bot.text_message(number, response)
+        text_message = self.whatsapp_api_handler.text_message(number, response)
         list_messages.append(text_message)
 
         for item in list_messages:
-            self.bot.send_whatsapp_message(item)
+            self.whatsapp_api_handler.send_whatsapp_message(item)
             print("Message sent.")
 
     def _send_menu_pdf(self, number: str):
-        pdf_url = os.getenv('DOCUMENT_URL')
+        pdf_url = self.pdf_manager.pdf_url
         caption = 'Aquí está nuestro menú en PDF.'
         filename = 'Menu.pdf'
-        document = self.bot.document_message(number, pdf_url, caption, filename)
-        self.bot.send_whatsapp_message(document)
+        document = self.whatsapp_api_handler.document_message(number, pdf_url, caption, filename)
+        self.whatsapp_api_handler.send_whatsapp_message(document)
         print(f"Menu PDF sent to {number}")
 
     def _generate_response_from_sections(self, query: str, sections: List[str], user_data: Dict[str, Any]) -> str:
@@ -123,9 +135,9 @@ class ConversationManager:
         prompt = f"Contexto: {context}\nPregunta: {query}\nRespuesta:"
         try:
             response = client.chat.completions.create(
-                model=MODEL,
+                model=self.MODEL,
                 messages=[
-                    {"role": "system", "content": self._get_system_prompt(user_data)},
+                    {"role": "system", "content": self.chatbot.system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=150,
@@ -135,24 +147,6 @@ class ConversationManager:
         except Exception as e:
             logging.exception(f"Error with OpenAI API: {e}")
             return "Lo siento, parece que hubo un problema en el sistema. Por favor, escribe tu mensaje de nuevo."
-
-    def _get_system_prompt(self, user_data: Dict[str, Any]) -> str:
-        expression = random.choice(self.boyaco_expressions)
-        return (
-            f"Eres {NAME}, un asistente de {COMPANY} que interactúa con los usuarios de manera informal, amigable y directa. "
-            f"Eres de nacionalidad de {LOCATION}, así que heredas sus costumbres y formas de hablar. "
-            "Tus respuestas son breves y van al grano. "
-            f"Usa expresiones típicas de un boyaco, como '{expression}'. "
-            "Al hacer preguntas, NO usas el signo de interrogación al inicio y evitas ser demasiado extenso. Por ejemplo: hola, cómo estás?; cómo te llamas?; "
-            "Haces la conversación fluida sin ser formal, y siempre mantienes un tono amigable y directo. "
-            f"NO uses signos de admiración/exclamación, que son poco comunes en mensajes de WhatsApp en {LOCATION}. "
-            "Si el usuario te pregunta si eres una IA o intenta cambiar el tema a algo que no sea sobre el restaurante, redirige educadamente la conversación de vuelta al menú o servicios que ofrecemos. "
-            "No admitas ser una IA, simplemente enfócate en ayudar al usuario con lo que necesite relacionado al restaurante. "
-            "Tu conocimiento se limita únicamente a información sobre el restaurante, su menú, servicios y ubicación. "
-            f"Restricciones: {prompts.RESTRICTIONS}"
-            "Información del menú: " + self.pdf_manager.content + " "
-        )
-    
     
     def interpret_user_message(self, user_message: str) -> tuple:
         """
@@ -174,7 +168,7 @@ class ConversationManager:
 
         try:
             response = client.chat.completions.create(
-                model=MODEL,
+                model=self.MODEL,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -197,17 +191,18 @@ class ConversationManager:
             return 'other', None
     
     def answer_image(self, question, image_url):
-        response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
+        try:
+            response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
             {
             "role": "user",
             "content": [
-                {"type": "text", "text": "What’s in this image?"},
+                {"type": "text", "text": question},
                 {
                 "type": "image_url",
                 "image_url": {
-                    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+                    "url": image_url,
                 },
                 },
             ],
@@ -215,5 +210,6 @@ class ConversationManager:
         ],
         max_tokens=300,
         )
-        
-        return response
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            raise e

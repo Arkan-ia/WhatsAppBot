@@ -67,6 +67,5 @@ def is_user_info_missing( number: str) -> bool:
 
 def get_whatsapp_token(from_id: str) -> str:
     # Esta función debería consultar una base de datos.
-    print("from_id: ", from_id)
     if from_id == "541794965673706":
         return "EAAFcOeGfUCEBO4ZAEeQhrAghK6M7R3PZA9yjyU96pehgNZCyWB0TWEOCJB93Ukdcy1XGCrBjUZCgE4CG6um0EW64NYPed4zdQTQxaGsShnZBgZC0Q4UxhgtqnmgRkZCeFfPL5KM0WoTRKk4wfmTUVnoHENFov8vu5u9jesswSQFxmiroOLV0yPZAdywQXx8Ta1j7mgZDZD"
