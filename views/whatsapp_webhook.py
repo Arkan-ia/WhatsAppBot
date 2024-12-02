@@ -3,10 +3,8 @@ from flask import jsonify, request
 import os
 import logging
 from src.chatbot_router import get_chatbot_from_number
-from src.conversation_manager import ConversationManager
 from src.whatsapp_api_handler import WhatsAppAPIHandler
-from utils.pdf_manager import PDFManager
-from src.data_management import get_whatsapp_token
+from utils.whatsapp_utils import is_valid_whatsapp_message
 
 def verify():
     try:
@@ -21,22 +19,40 @@ def verify():
         return jsonify({"status": "error", "message": str(e)}), 403
     
 def handle_incoming_message():
+    body = request.get_json()
+
+    # Check if it's a WhatsApp status update
+    if (
+        body.get("entry", [{}])[0]
+        .get("changes", [{}])[0]
+        .get("value", {})
+        .get("statuses")
+    ):
+        logging.info("Received a WhatsApp status update.")
+        return jsonify({"status": "ok"}), 200
+    
+    entry = body['entry'][0]
+    changes = entry['changes'][0]
+    value = changes['value']
+    message = value['messages'][0]
+    from_id = value["metadata"]["phone_number_id"]
+
     try:
-        body = request.get_json()
-        entry = body['entry'][0]
-        changes = entry['changes'][0]
-        value = changes['value']
-        message = value['messages'][0]
+        if is_valid_whatsapp_message(body):
 
-        from_id = value["metadata"]["phone_number_id"]
+            chatbot = get_chatbot_from_number(from_id)
+            chatbot.handle_incoming_message(message)
 
-        chatbot = get_chatbot_from_number(from_id)
-        chatbot.handle_incoming_message(message)
-
-        return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
-
+            return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
+        else:
+            # if the request is not a WhatsApp API event, return an error
+            return (
+                jsonify({"status": "error", "message": "Not a WhatsApp API event"}),
+                404,
+            )
     except Exception as e:
-        logging.error(f"Error al recibir el mensaje: {str(e)}")
+        logging.error(f"Error al recibir el mensaje: {e}")
+        logging.error(f"Body recibido: {body}")
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
 
 
