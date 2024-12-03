@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 import requests
 
-from db.firebase import upload_media_to_storage
+from src.db.firebase import upload_media_to_storage
 
 MODEL = 'gpt-4o-mini'
 LOCATION = 'Pasto - Boyacá - Colombia'
@@ -107,7 +107,7 @@ class WhatsAppAPIHandler:
 
     # Message Creation Methods
 
-    def text_message(self, number: str, text: str) -> str:
+    def text_message(self, number: str, text: str) -> Dict[str, Any]:
         """
         Create a text message in JSON format.
 
@@ -129,7 +129,7 @@ class WhatsAppAPIHandler:
         )
         return data
 
-    def mark_read_message(self, message_id: str) -> str:
+    def mark_read_message(self, message_id: str) -> Dict[str, Any]:
         """
         Create a JSON message to mark a message as read.
 
@@ -150,7 +150,7 @@ class WhatsAppAPIHandler:
 
     def button_reply_message(
         self, number: str, options: List[str], body: str, footer: str, session_id: str
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Create a button reply message.
 
@@ -196,7 +196,7 @@ class WhatsAppAPIHandler:
 
     def list_reply_message(
         self, number: str, options: List[str], body: str, footer: str, session_id: str
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Create a list reply message.
 
@@ -241,7 +241,7 @@ class WhatsAppAPIHandler:
 
     def document_message(
         self, number: str, url: str, caption: str, filename: str
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Create a document message.
 
@@ -269,7 +269,7 @@ class WhatsAppAPIHandler:
         )
         return data
 
-    def reply_reaction_message(self, number: str, message_id: str, emoji: str) -> str:
+    def reply_reaction_message(self, number: str, message_id: str, emoji: str) -> Dict[str, Any]:
         """
         Create a reaction message to reply to a user's message.
 
@@ -294,7 +294,7 @@ class WhatsAppAPIHandler:
 
     def reply_text_message(
         self, number: str, message_id: str, text: str
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Create a text message in reply to a user's message.
 
@@ -350,7 +350,7 @@ class WhatsAppAPIHandler:
             raise Exception(f"Error getting media: {answer.status_code}, {answer.text}")
     
     # Utility methods
-    def handle_incoming_message(self, message: Dict[str, Any]):                
+    def handle_message(self, message: Dict[str, Any]):                
         text = self.get_whatsapp_message(message)
         message_id = message.get('id', None)
 

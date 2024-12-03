@@ -1,10 +1,10 @@
-from db.firebase import add_chat_message
+from src.db.firebase import add_chat_message
 from flask import jsonify, request
 import os
 import logging
 from src.chatbot_router import get_chatbot_from_number
 from src.whatsapp_api_handler import WhatsAppAPIHandler
-from utils.whatsapp_utils import is_valid_whatsapp_message
+from src.utils.whatsapp_utils import is_valid_whatsapp_message
 
 def verify():
     try:
@@ -18,7 +18,7 @@ def verify():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 403
     
-def handle_incoming_message():
+def process_message():
     body = request.get_json()
 
     # Check if it's a WhatsApp status update
@@ -28,9 +28,11 @@ def handle_incoming_message():
         .get("value", {})
         .get("statuses")
     ):
-        logging.info("Received a WhatsApp status update.")
+        print("Received a WhatsApp status update.")
         return jsonify({"status": "ok"}), 200
     
+    print("Starting message processing...")
+
     entry = body['entry'][0]
     changes = entry['changes'][0]
     value = changes['value']
@@ -39,11 +41,12 @@ def handle_incoming_message():
 
     try:
         if is_valid_whatsapp_message(body):
-
+            print("Starting bot creation...")
             chatbot = get_chatbot_from_number(from_id)
-            chatbot.handle_incoming_message(message)
+            print("Bot created successfully.")
+            chatbot.manage_incoming_message(message)
 
-            return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
+            return jsonify({"status": "ok"}), 200
         else:
             # if the request is not a WhatsApp API event, return an error
             return (

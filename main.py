@@ -1,7 +1,7 @@
 from flask import Flask, Request
 from flask_cors import CORS
 from dotenv import load_dotenv
-from views.whatsapp_webhook import *
+from src.views.whatsapp_webhook import *
 
 load_dotenv()
 
@@ -27,7 +27,7 @@ def main(request: Request):
             return verify()
 
         elif request.path == '/' and request.method == 'POST':
-            return handle_incoming_message()
+            return process_message()
 
         elif request.path == '/start-conversation' and request.method == 'POST':
             return start_conversation()

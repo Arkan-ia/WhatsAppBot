@@ -4,7 +4,7 @@ from firebase_admin import credentials, firestore, storage
 
 try:
     # Inicialización de Firebase
-    cred = credentials.Certificate("db/firebase.json")
+    cred = credentials.Certificate("src/db/firebase.json")
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 except Exception as e:

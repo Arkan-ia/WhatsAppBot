@@ -2,21 +2,24 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from models.chatbot import ChatbotModel
+from src.models.chatbot import ChatbotModel
 from src.data_management import get_user_data
-import src.prompts as prompts
 from openai import OpenAI
-from utils.pdf_manager import PDFManager
+from src.utils.vector_store_manager import VectorStoreManager
 from src.whatsapp_api_handler import WhatsAppAPIHandler
 
 client = OpenAI()
 
+
 class ConversationManager:
-    def __init__(self, whatsapp_api_handler: WhatsAppAPIHandler, pdf_manager: PDFManager, chatbot: ChatbotModel):
+    def __init__(
+        self,
+        whatsapp_api_handler: WhatsAppAPIHandler,
+        chatbot: ChatbotModel,
+    ):
         try:
             self.whatsapp_api_handler = whatsapp_api_handler
-            self.MODEL = 'gpt-4o-mini'
-            self.pdf_manager = pdf_manager
+            self.MODEL = "gpt-4o-mini"
             self.estados_conversacion = {}
             self.chatbot = chatbot
         except Exception as e:
@@ -48,18 +51,20 @@ class ConversationManager:
                     model=self.MODEL,
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
                     max_tokens=3,
-                    temperature=0
+                    temperature=0,
                 )
                 response_text = response.choices[0].message.content.strip().lower()
                 print(f"User message: '{user_message}'")
                 print(f"GPT-4 response: '{response_text}'")
-                is_requesting = response_text == 'true'
+                is_requesting = response_text == "true"
                 return is_requesting
             except Exception as e:
-                logging.exception(f"Error al validar solicitud de PDF con OpenAI API: {e}")
+                logging.exception(
+                    f"Error al validar solicitud de PDF con OpenAI API: {e}"
+                )
                 return False
 
         except Exception as e:
@@ -76,9 +81,11 @@ class ConversationManager:
         """
         try:
             self.estados_conversacion[number] = state
-            logging.debug(f"Conversation state updated for {number}: {state}")
+            print(f"Conversation state updated for {number}: {state}")
         except Exception as e:
-            logging.exception("Error al actualizar el estado de la conversación: %s", str(e))
+            logging.exception(
+                "Error al actualizar el estado de la conversación: %s", str(e)
+            )
             raise
 
     def get_conversation_state(self, number: str) -> Optional[str]:
@@ -94,24 +101,32 @@ class ConversationManager:
         try:
             return self.estados_conversacion.get(number)
         except Exception as e:
-            logging.exception("Error al obtener el estado de la conversación: %s", str(e))
+            logging.exception(
+                "Error al obtener el estado de la conversación: %s", str(e)
+            )
             return None
 
-    def handle_incoming_message(self, message: Dict[str, Any]):
+    def manage_incoming_message(self, message: Dict[str, Any]):
+        print("Starting conversation manager processing...")
         try:
             message_type = message["type"]
-                    
+            
             text = self.whatsapp_api_handler.get_whatsapp_message(message)
-            number = message['from']
-            message_id = message.get('id', None)
+            number = message["from"]
+            message_id = message.get("id", None)
             print(f"User message from {number}: {text}")
 
-            mark_read = self.whatsapp_api_handler.mark_read_message(message_id)
-            
-            list_messages = []
-            list_messages.append(mark_read)
+            mark_read_data = self.whatsapp_api_handler.mark_read_message(message_id)
+            self.whatsapp_api_handler.send_whatsapp_message(mark_read_data)
+            print("Message marked as read.")
 
             current_state = self.get_conversation_state(number)
+            if not current_state:  # First interaction
+                self.update_conversation_state(number, "initial")
+            
+            if current_state == "initial":
+                self.update_conversation_state(number, "menu")
+
             user_data = get_user_data(number)
 
             if message_type == "image":
@@ -126,31 +141,37 @@ class ConversationManager:
                 self._send_menu_pdf(number)
                 response = "Te he enviado nuestro menú en PDF. ¿Qué te gustaría saber sobre algún plato en particular?"
             else:
-                relevant_sections = self.pdf_manager.retrieve_relevant_sections(text)
-                print("relevant_sections: ", relevant_sections)
-                response = self._generate_response_from_sections(text, relevant_sections, user_data)
-
+                print("Generating response from sections...")
+                relevant_sections = self.chatbot.vectorstore.retrieve_relevant_sections(text)
+                response = self._generate_response_from_sections(
+                    text, relevant_sections, user_data
+                )
+            print("Sending response to WhatsApp...")
             text_message = self.whatsapp_api_handler.text_message(number, response)
             self.whatsapp_api_handler.send_whatsapp_message(text_message)
             print("Message sent.")
-                
+
         except Exception as e:
             logging.exception("Error al procesar mensaje entrante: %s", str(e))
             raise
 
     def _send_menu_pdf(self, number: str):
         try:
-            pdf_url = self.pdf_manager.pdf_url
-            caption = 'Aquí está nuestro menú en PDF.'
-            filename = 'Menu.pdf'
-            document = self.whatsapp_api_handler.document_message(number, pdf_url, caption, filename)
+            pdf_url = self.chatbot.vectorstore.pdf_url
+            caption = "Aquí está nuestro menú en PDF."
+            filename = "Menu.pdf"
+            document = self.whatsapp_api_handler.document_message(
+                number, pdf_url, caption, filename
+            )
             self.whatsapp_api_handler.send_whatsapp_message(document)
             print(f"Menu PDF sent to {number}")
         except Exception as e:
             logging.exception("Error al enviar el PDF del menú: %s", str(e))
             raise
 
-    def _generate_response_from_sections(self, query: str, sections: List[str], user_data: Dict[str, Any]) -> str:
+    def _generate_response_from_sections(
+        self, query: str, sections: List[str], user_data: Dict[str, Any]
+    ) -> str:
         try:
             context = " ".join(sections)
             # print("context: ", context)
@@ -161,10 +182,10 @@ class ConversationManager:
                     model=self.MODEL,
                     messages=[
                         {"role": "system", "content": self.chatbot.system_prompt},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
                     max_tokens=150,
-                    temperature=0.1
+                    temperature=0.1,
                 )
                 return response.choices[0].message.content.strip()
             except Exception as e:
@@ -172,8 +193,10 @@ class ConversationManager:
                 return "Lo siento, parece que hubo un problema en el sistema. Por favor, escribe tu mensaje de nuevo."
         except Exception as e:
             logging.exception("Error al generar respuesta desde secciones: %s", str(e))
-            return "Lo siento, ocurrió un error inesperado. Por favor, intenta nuevamente."
-    
+            return (
+                "Lo siento, ocurrió un error inesperado. Por favor, intenta nuevamente."
+            )
+
     def interpret_user_message(self, user_message: str) -> tuple:
         """
         Uses GPT-4 to interpret the user's message and determine their intent.
@@ -198,27 +221,31 @@ class ConversationManager:
                     model=self.MODEL,
                     messages=[
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
                     max_tokens=100,
-                    temperature=0.0
+                    temperature=0.0,
                 )
                 response_text = response.choices[0].message.content.strip()
-                print(f"Interpretation of user message: '{response_text}'")  
+                print(f"Interpretation of user message: '{response_text}'")
 
                 result = json.loads(response_text)
-                intent = result.get('intent', 'other')
-                entity = result.get('entity', None)
-                if entity == 'null':
+                intent = result.get("intent", "other")
+                entity = result.get("entity", None)
+                if entity == "null":
                     entity = None
                 return intent, entity
             except Exception as e:
-                logging.exception("Error al interpretar mensaje con OpenAI API: %s", str(e))
-                return 'other', None
+                logging.exception(
+                    "Error al interpretar mensaje con OpenAI API: %s", str(e)
+                )
+                return "other", None
         except Exception as e:
-            logging.exception("Error general al interpretar mensaje de usuario: %s", str(e))
-            return 'other', None
-    
+            logging.exception(
+                "Error general al interpretar mensaje de usuario: %s", str(e)
+            )
+            return "other", None
+
     def answer_image(self, question, image_url):
         try:
             response = client.chat.completions.create(
