@@ -30,7 +30,9 @@ def get_chatbot_from_number(from_id: str):
 
                 chatbot = ChatbotModel(**personalization_data)
 
-                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
+                conversation_manager = ConversationManager(
+                    whatsapp_api_handler, chatbot
+                )
                 return conversation_manager
 
             except Exception as e:
@@ -53,7 +55,9 @@ def get_chatbot_from_number(from_id: str):
 
                 chatbot = ChatbotModel(**personalization_data)
 
-                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
+                conversation_manager = ConversationManager(
+                    whatsapp_api_handler, chatbot
+                )
                 return conversation_manager
             except Exception as e:
                 logging.exception(
@@ -61,7 +65,7 @@ def get_chatbot_from_number(from_id: str):
                 )
                 raise
 
-        elif from_id == "523135820878320":
+        elif from_id == "458394894032140":
             try:
                 # Don Rejuano bot
                 personalization_data = {
@@ -69,7 +73,7 @@ def get_chatbot_from_number(from_id: str):
                     "company": "La Rejana Callejera",
                     "location": "Pasto - Boyacá - Colombia",
                     "description": "Restaurante - Comida",
-                    "vectorstore_path": "./src/vectorstores/brayan_la_rejana_callejera",
+                    "vectorstore_path": "./src/vectorstores/larejanacallejera",
                     "pdf_prompt": "El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'.",
                     "personality": "Un joven campesino de 20 años que trabaja en el restaurante de su familia.",
                     "expressions": [
@@ -101,7 +105,9 @@ def get_chatbot_from_number(from_id: str):
 
                 chatbot = ChatbotModel(**personalization_data)
 
-                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
+                conversation_manager = ConversationManager(
+                    whatsapp_api_handler, chatbot
+                )
                 return conversation_manager
             except Exception as e:
                 logging.exception(
