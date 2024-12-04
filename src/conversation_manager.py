@@ -2,10 +2,11 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
+from src.db.firebase import add_chat_message, add_contact_message, get_conversation
 from src.models.chatbot import ChatbotModel
 from src.data_management import get_user_data
 from openai import OpenAI
-from src.utils.vector_store_manager import VectorStoreManager
+from src.models.message import ChatMessage
 from src.whatsapp_api_handler import WhatsAppAPIHandler
 
 client = OpenAI()
@@ -41,10 +42,10 @@ class ConversationManager:
                 "Eres un asistente que determina si el usuario está solicitando explícitamente ver el menú o el PDF del menú. "
                 "Responde solo con 'TRUE' o 'FALSE'. No agregues ningún texto adicional. "
                 "Responde 'TRUE' solo si el usuario está pidiendo explícitamente ver el menú, la carta, los productos o el PDF del menú. "
-                "Ejemplos de 'TRUE': 'Envíame el menú', 'Quiero ver el menú', 'Me puedes enviar el menú en PDF?'. "
+                "Ejemplos de 'TRUE': 'Envíame el menú', 'Quiero ver el menú', 'Me puedes enviar el menú en PDF? que productos venden?'. "
                 "Ejemplos de 'FALSE': '¿Qué ingredientes tiene la Montañera?', '¿Cuánto cuesta la hamburguesa clásica?'."
             )
-            prompt = f"El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente ver el menú o el PDF del menú? Responde 'TRUE' o 'FALSE'."
+            prompt = f"El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'."
 
             try:
                 response = client.chat.completions.create(
@@ -106,54 +107,109 @@ class ConversationManager:
             )
             return None
 
+
     def manage_incoming_message(self, message: Dict[str, Any]):
+        """
+        Procesa y maneja los mensajes entrantes de WhatsApp.
+        
+        Args:
+            message (Dict[str, Any]): El mensaje entrante con toda su información
+        """
         print("Starting conversation manager processing...")
         try:
+            # Extraer información básica del mensaje
             message_type = message["type"]
-            
             text = self.whatsapp_api_handler.get_whatsapp_message(message)
             number = message["from"]
             message_id = message.get("id", None)
             print(f"User message from {number}: {text}")
 
-            mark_read_data = self.whatsapp_api_handler.mark_read_message(message_id)
-            self.whatsapp_api_handler.send_whatsapp_message(mark_read_data)
-            print("Message marked as read.")
+            #current_messages = get_messages_for_openai(self.whatsapp_api_handler.from_whatsapp_id, number)
+            #print("current_messages: ", current_messages)
 
-            current_state = self.get_conversation_state(number)
-            if not current_state:  # First interaction
-                self.update_conversation_state(number, "initial")
-            
-            if current_state == "initial":
-                self.update_conversation_state(number, "menu")
+            # Registrar mensaje y marcar como leído
+            self._register_message(number, text, message_id)
 
+            # Manejar estado de la conversación
+            self._handle_conversation_state(number)
+
+            # Obtener datos del usuario
             user_data = get_user_data(number)
 
-            if message_type == "image":
-                print("is image")
-                print(message["image"])
-                id = message["image"]["id"]
-                image_url = self.whatsapp_api_handler.get_media(id)
-                response = self.answer_image("", image_url)
-                print(response)
+            # Procesar mensaje según su tipo y generar respuesta
+            response = self._process_message_by_type(message_type, text, message, user_data)
 
-            elif self.is_requesting_pdf(text):
-                self._send_menu_pdf(number)
-                response = "Te he enviado nuestro menú en PDF. ¿Qué te gustaría saber sobre algún plato en particular?"
-            else:
-                print("Generating response from sections...")
-                relevant_sections = self.chatbot.vectorstore.retrieve_relevant_sections(text)
-                response = self._generate_response_from_sections(
-                    text, relevant_sections, user_data
-                )
-            print("Sending response to WhatsApp...")
-            text_message = self.whatsapp_api_handler.text_message(number, response)
-            self.whatsapp_api_handler.send_whatsapp_message(text_message)
-            print("Message sent.")
+            # Enviar respuesta
+            self._send_response(number, response)
 
         except Exception as e:
             logging.exception("Error al procesar mensaje entrante: %s", str(e))
             raise
+
+    def _register_message(self, number: str, text: str, message_id: Optional[str]) -> None:
+        """Registra el mensaje y lo marca como leído"""
+        add_contact_message(self.whatsapp_api_handler.from_whatsapp_id, number, text)
+        
+        if message_id:
+            mark_read_data = self.whatsapp_api_handler.mark_read_message(message_id)
+            self.whatsapp_api_handler.send_whatsapp_message(mark_read_data)
+            print("Message marked as read.")
+
+    def _handle_conversation_state(self, number: str) -> None:
+        """Maneja el estado de la conversación"""
+        current_state = self.get_conversation_state(number)
+        if not current_state:  # Primera interacción
+            self.update_conversation_state(number, "initial")
+        
+        if current_state == "initial":
+            self.update_conversation_state(number, "menu")
+
+    def _process_message_by_type(
+        self, 
+        message_type: str, 
+        text: str, 
+        message: Dict[str, Any],
+        user_data: Dict[str, Any]
+    ) -> str:
+        """Procesa el mensaje según su tipo y genera una respuesta"""
+        if message_type == "image":
+            return self._handle_image_message(message)
+        else:
+            return self._handle_text_message(text, message["from"], user_data)
+
+    def _handle_image_message(self, message: Dict[str, Any]) -> str:
+        """Procesa mensajes de tipo imagen"""
+        print("Processing image message")
+        image_id = message["image"]["id"]
+        image_url = self.whatsapp_api_handler.get_media(image_id)
+        response = self.answer_image("", image_url)
+        print(response)
+        return response
+
+    def _handle_text_message(self, text: str, number: str, user_data: Dict[str, Any]) -> str:
+        """Procesa mensajes de texto"""
+        if self.is_requesting_pdf(text):
+            self.chatbot.add_message("user", text)
+            self._send_menu_pdf(number)
+            return "Te he enviado nuestro menú en PDF. ¿Qué te gustaría saber sobre algún plato en particular?"
+        
+        print("Generating response from sections...")
+        relevant_sections = self.chatbot.vectorstore.retrieve_relevant_sections(text)
+
+        messages = get_conversation(self.whatsapp_api_handler.from_whatsapp_id, number)
+        messages = [ChatMessage(**x.to_dict()).to_dict() for x in messages]
+
+        return self._generate_response_from_sections(text, relevant_sections, user_data, messages)
+
+    def _send_response(self, number: str, response: str) -> None:
+        """Envía la respuesta al usuario"""
+        self.chatbot.add_message("assistant", response)
+        add_chat_message(self.whatsapp_api_handler.from_whatsapp_id, number, response)
+
+        print("Sending response to WhatsApp...")
+        text_message = self.whatsapp_api_handler.text_message(number, response)
+        self.whatsapp_api_handler.send_whatsapp_message(text_message)
+        print("Message sent.")
 
     def _send_menu_pdf(self, number: str):
         try:
@@ -170,23 +226,30 @@ class ConversationManager:
             raise
 
     def _generate_response_from_sections(
-        self, query: str, sections: List[str], user_data: Dict[str, Any]
+        self, query: str, sections: List[str], user_data: Dict[str, Any], messages: List[Dict[str, Any]]
     ) -> str:
         try:
             context = " ".join(sections)
             # print("context: ", context)
             prompt = f"Contexto: {context}\nPregunta: {query}\nRespuesta:"
+
             # print("prompt: ", prompt)
             try:
+                print("current_messages: ", messages)
+
                 response = client.chat.completions.create(
                     model=self.MODEL,
-                    messages=[
-                        {"role": "system", "content": self.chatbot.system_prompt},
-                        {"role": "user", "content": prompt},
-                    ],
+                    messages=[{"role": "system", "content": self.chatbot.system_prompt}, *messages],
                     max_tokens=150,
                     temperature=0.1,
                 )
+                print("Chat history: ", self.chatbot.chat_history)
+
+                print(
+                    "Chat history after adding user message: ",
+                    self.chatbot.chat_history,
+                )
+
                 return response.choices[0].message.content.strip()
             except Exception as e:
                 logging.exception(f"Error con OpenAI API: {e}")

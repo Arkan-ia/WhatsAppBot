@@ -16,7 +16,7 @@ class WhatsAppAPIHandler:
     A class to interact with the WhatsApp API and manage chatbot conversations.
     """
 
-    def __init__(self, api_url: str, token: str, stickers: Optional[Dict[str, str]] = None):
+    def __init__(self, from_whatsapp_id: str, token: str, stickers: Optional[Dict[str, str]] = None):
         """
         Initialize the WhatsAppBot with API credentials and optional media IDs.
 
@@ -25,7 +25,8 @@ class WhatsAppAPIHandler:
             token (str): The authentication token for the API.
             stickers (Optional[Dict[str, str]]): A dictionary of sticker names to media IDs.
         """
-        self.api_url = api_url
+        self.from_whatsapp_id = from_whatsapp_id
+        self.api_url = f"https://graph.facebook.com/v21.0/{from_whatsapp_id}/messages"
         self.token = token
         self.headers = {
             "Content-Type": "application/json",

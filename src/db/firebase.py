@@ -1,4 +1,5 @@
 import logging
+from typing import List
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 
@@ -84,7 +85,7 @@ def get_contact_ref(ws_id, phone_number):
         raise
 
 
-def add_message(ws_id, phone_number, message, is_sender):
+def add_message(ws_id, phone_number, message, role):
     """Añade un mensaje a la conversación."""
     try:
         contact_ref = get_contact_ref(ws_id, phone_number)
@@ -101,14 +102,14 @@ def add_message(ws_id, phone_number, message, is_sender):
         message_ref.set(
             {
                 "contact_ref": contact_ref,
-                "text": message,
-                "is_sender": is_sender,
+                "content": message,
+                "role": role,
                 "platform": "whatsapp",
                 "timestamp": firestore.SERVER_TIMESTAMP,
             }
         )
         print(
-            f"Mensaje {'del usuario' if is_sender else 'del bot'} añadido para el contacto {phone_number} del usuario con ws_id {ws_id}"
+            f"Mensaje {'del usuario' if role else 'del bot'} añadido para el contacto {phone_number} del usuario con ws_id {ws_id}"
         )
     except Exception as e:
         print(f"Error al añadir mensaje para usuario {ws_id}: {str(e)}")
@@ -118,7 +119,7 @@ def add_message(ws_id, phone_number, message, is_sender):
 def add_contact_message(ws_id, phone_number, message):
     """Añade un mensaje del bot a la conversación."""
     try:
-        add_message(ws_id, phone_number, message, False)
+        add_message(ws_id, phone_number, message, "user")
     except Exception as e:
         print(f"Error al añadir mensaje del bot para usuario {ws_id}: {str(e)}")
         raise
@@ -127,13 +128,13 @@ def add_contact_message(ws_id, phone_number, message):
 def add_chat_message(ws_id, phone_number, message):
     """Añade un mensaje del usuario a la conversación."""
     try:
-        add_message(ws_id, phone_number, message, True)
+        add_message(ws_id, phone_number, message, "assistant")
     except Exception as e:
         print(f"Error al añadir mensaje del usuario {ws_id}: {str(e)}")
         raise
 
 
-def get_conversation(ws_id, phone_number):
+def get_conversation(ws_id, phone_number) -> List:
     """Obtiene la conversación de un usuario con un contacto específico."""
     try:
         contact_ref = get_contact_ref(ws_id, phone_number)

@@ -10,9 +10,7 @@ def get_chatbot_from_number(from_id: str):
     try:
         print("from_id: ", from_id)
         token = get_whatsapp_token(from_id)
-        whatsapp_api_handler = WhatsAppAPIHandler(
-            api_url=f"https://graph.facebook.com/v21.0/{from_id}/messages", token=token
-        )
+        whatsapp_api_handler = WhatsAppAPIHandler(from_whatsapp_id=from_id, token=token)
 
         if from_id == "541794965673706":
             try:
@@ -21,6 +19,8 @@ def get_chatbot_from_number(from_id: str):
                     "name": "Johan",
                     "company": "Zalee",
                     "location": "Bogotá - Colombia",
+                    "vectorstore_path": "./src/vectorstores/johan_zalee",
+                    "pdf_prompt": "El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'.",
                     "description": "Plataforma donde puedes encontrar las mejores ofertas y beneficios para la vida nocturna en Bogotá, ya sea en pubs, clubes, discotecas o eventos."
                     "En cuanto a sitios puedes explorar los mejores descuentos en sus productos y conocer Bogotá, y en eventos, obtienes descuentos por cantidad de personas."
                     "Si eres un sitio o un organizador de eventos, automatizamos y mejoramos tu proceso de compra de entradas y puedes publicar tus productos y eventos para promocionarlos.",
@@ -30,12 +30,7 @@ def get_chatbot_from_number(from_id: str):
 
                 chatbot = ChatbotModel(**personalization_data)
 
-                pdf_manager = VectorStoreManager(
-                    "https://firebasestorage.googleapis.com/v0/b/arcania-c4669.appspot.com/o/media%2FBrochure%20de%20Marca.pdf?alt=media&token=12437f44-6c25-41a2-b41e-f1d9402339cf"
-                )
-                conversation_manager = ConversationManager(
-                    whatsapp_api_handler, pdf_manager, chatbot
-                )
+                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
                 return conversation_manager
 
             except Exception as e:
@@ -50,6 +45,7 @@ def get_chatbot_from_number(from_id: str):
                     "company": "Gano Excel",
                     "location": "Bogotá - Colombia",
                     "vectorstore_path": "./src/vectorstores/juan_gano_excel",
+                    "pdf_prompt": "El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'.",
                     "description": "En Gano Excel, nos dedicamos a la creación de productos con los más altos estándares de calidad en la búsqueda de tu bienestar. Descubre cómo nuestra gama única de productos, puede transformar tu vida.",
                     "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
                     "expressions": [""],
@@ -57,9 +53,7 @@ def get_chatbot_from_number(from_id: str):
 
                 chatbot = ChatbotModel(**personalization_data)
 
-                conversation_manager = ConversationManager(
-                    whatsapp_api_handler, chatbot
-                )
+                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
                 return conversation_manager
             except Exception as e:
                 logging.exception(
@@ -75,6 +69,8 @@ def get_chatbot_from_number(from_id: str):
                     "company": "La Rejana Callejera",
                     "location": "Pasto - Boyacá - Colombia",
                     "description": "Restaurante - Comida",
+                    "vectorstore_path": "./src/vectorstores/brayan_la_rejana_callejera",
+                    "pdf_prompt": "El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'.",
                     "personality": "Un joven campesino de 20 años que trabaja en el restaurante de su familia.",
                     "expressions": [
                         "qué más, pues?",
@@ -105,12 +101,7 @@ def get_chatbot_from_number(from_id: str):
 
                 chatbot = ChatbotModel(**personalization_data)
 
-                pdf_manager = VectorStoreManager(
-                    "https://cdn.glitch.global/1e6c16f0-cf67-4f9c-b4af-433d3336cf2f/Menu.pdf?v=1729527777028"
-                )
-                conversation_manager = ConversationManager(
-                    whatsapp_api_handler, pdf_manager, chatbot
-                )
+                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
                 return conversation_manager
             except Exception as e:
                 logging.exception(
