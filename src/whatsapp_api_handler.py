@@ -2,10 +2,15 @@
 import json
 import logging
 from datetime import datetime
+import os
 from typing import Any, Dict, List, Optional
 import requests
+from openai import OpenAI
 
-from src.db.firebase import upload_media_to_storage
+client = OpenAI() 
+OPENAI_API_KEY="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"
+
+from src.db.firebase import upload_media_to_storage, upload_audio_to_storage
 
 MODEL = 'gpt-4o-mini'
 LOCATION = 'Pasto - Boyacá - Colombia'
@@ -74,6 +79,9 @@ class WhatsAppAPIHandler:
         message_type = message["type"]
         if message_type == "text":
             return message["text"]["body"]
+        elif message_type == "audio":
+            media_id = message["audio"]["id"]
+            return self.get_text_from_audio(media_id)
         elif message_type == "button":
             return message["button"]["text"]
         elif message_type == "interactive":
@@ -86,7 +94,67 @@ class WhatsAppAPIHandler:
                 return "mensaje no procesado"
         else:
             return "mensaje no procesado"
+        
+    def get_text_from_audio(self, media_id: str) -> str:
+        """
+        Convert an audio file to text using the OpenAI API.
 
+        Args:
+            audio_url (str): The URL of the audio file.
+
+        Returns:
+            str: The extracted text from the audio.
+        """
+        
+        audio_media_response = self.get_media_response(media_id)
+        
+        # Upload to firestore
+        file_name = f"audios/{media_id}.ogg"
+        audio_path = upload_audio_to_storage(audio_media_response, file_name) #self.download_audio(audio_url)
+        
+        downloaded_audio_path = self.download_audio(audio_media_response.json()['url'])
+        print(f"Audio descargado: {audio_path}")
+        transcription = self.transcribe_audio(downloaded_audio_path)
+        print(f"Transcripción: {transcription}")
+        
+        if os.path.exists(downloaded_audio_path):
+            os.remove(downloaded_audio_path)
+        
+        return transcription
+        
+        #return transcription
+    
+    def get_media_response(self,media_id: str) -> str:
+        """Obtener la URL del archivo de audio."""
+        url = f"https://graph.facebook.com/v21.0/{media_id}"
+        try:
+            response = requests.get(url, headers=self.headers, stream=True)
+            # response.raise_for_status()
+            return response
+            
+        except Exception as e:
+            logging.exception(f"Exception occurred while sending message: {e}")
+            
+    def download_audio(self, url: str) -> str:
+        """Descargar el archivo de audio."""
+        response = requests.get(url, headers=self.headers)
+        response.raise_for_status()
+
+        file_path = "audio.ogg"
+        with open(file_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        return file_path
+    
+    def transcribe_audio(self,file_path):
+        """Enviar el archivo de audio a OpenAI y obtener la transcripción."""
+        response = client.audio.transcriptions.create(
+            file=open(file_path, "rb"),
+            model="whisper-1",
+            response_format="text",
+        )
+        return response
     def send_whatsapp_message(self, data: str) -> None:
         """
         Send a message through the WhatsApp API.

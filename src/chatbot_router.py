@@ -36,6 +36,30 @@ def get_chatbot_from_number(from_id: str):
             except Exception as e:
                 logging.exception("Error al configurar el chatbot de Zalee: %s", str(e))
                 raise
+            
+        elif from_id == "511736975350831":
+            try:
+                # Jorge bot
+                personalization_data = {
+                    "name": "Jorge",
+                    "company": "Gano Excel",
+                    "location": "Bogotá - Colombia",
+                    "vectorstore_path": "./src/vectorstores/juan_gano_excel",
+                    "pdf_prompt": "El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'.",
+                    "description": "En Gano Excel, nos dedicamos a la creación de productos con los más altos estándares de calidad en la búsqueda de tu bienestar. Descubre cómo nuestra gama única de productos, puede transformar tu vida.",
+                    "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
+                    "expressions": [""],
+                }
+
+                chatbot = ChatbotModel(**personalization_data)
+
+                conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
+                return conversation_manager
+            except Exception as e:
+                logging.exception(
+                    "Error al configurar el chatbot de Gano Excel: %s", str(e)
+                )
+                raise
 
         elif from_id == "400692489794103":
             try:
