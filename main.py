@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from src.utils.notifications import send_email_notification
 from src.views.whatsapp_webhook import *
 
 load_dotenv()
@@ -34,6 +35,10 @@ def start_conversation_route():
 @app.route('/send-message', methods=['POST'])
 def send_message_route():
     return send_message()
+
+@app.route('/send-email', methods=['GET'])
+def send_email_route():
+    return send_email_notification("kevinskate.kg@gmail.com", "Cuerpo del email", "Prueba")
 
 @app.before_request
 def before_request(): 
