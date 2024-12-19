@@ -16,7 +16,7 @@ class VectorStoreManager:
 
     def retrieve_relevant_sections(self, query: str) -> List[str]:
         try:
-            docs = self.vectorstore.similarity_search(query, k=3)
+            docs = self.vectorstore.similarity_search(query, k=10)
             return [doc.page_content for doc in docs]
         except Exception as e:
             logging.error(f"Error retrieving relevant sections: {str(e)}")

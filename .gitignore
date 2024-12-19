@@ -1,4 +1,12 @@
-env
-sett.py
+# Archivos de entorno
 .env
 .env.yaml
+env/
+venv/
+ENV/
+
+# Archivos de configuración
+sett.py
+*.pyc
+__pycache__/
+.DS_Store
