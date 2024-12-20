@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,Request
 from flask_cors import CORS
 from dotenv import load_dotenv
 from src.utils.notifications import send_email_notification
@@ -9,48 +9,41 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Ruta para verificar el webhook
-@app.route('/', methods=['GET'])
-def verify_route():
-    print("in verify  ----------------->")
-    return verify()
+def main(request: Request):
+    """
+    Esta función maneja todas las solicitudes HTTP entrantes.
+    """
 
-# Ruta para manejar POST en '/'
-@app.route('/', methods=['POST'])
-def handle_message_route():
-    print("in handle message  ----------------->")
-    return process_message()
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    }
+    if request.method == 'OPTIONS':
+        return ('', 204, headers)
 
-# Ruta para el ping
-@app.route('/ping', methods=['GET'])
-def ping_route():
-    return jsonify({"message": "pong"}), 200
+    with app.app_context():
+        if request.path == '/' and request.method == 'GET':
+            return verify()
 
-# Ruta para iniciar conversación
-@app.route('/start-conversation', methods=['POST'])
-def start_conversation_route():
-    return start_conversation()
+        elif request.path == '/' and request.method == 'POST':
+            return process_message()
 
-# Ruta para enviar mensaje
-@app.route('/send-message', methods=['POST'])
-def send_message_route():
-    return send_message()
+        elif request.path == '/start-conversation' and request.method == 'POST':
+            return start_conversation()
 
-@app.route('/send-email', methods=['GET'])
-def send_email_route():
-    return send_email_notification("kevinskate.kg@gmail.com", "Cuerpo del email", "Prueba")
+        elif request.path == '/send-message' and request.method == 'POST':
+            return send_message()
+        
+        elif request.path == '/send-email' and request.method == 'GET':
+            return send_email_notification("kevinskate.kg@gmail.com", "Cuerpo del email", "Prueba")
+        
+        elif request.path == '/ping' and request.method == 'GET':
+            return jsonify({"message": "pong"}), 200
 
-@app.before_request
-def before_request(): 
-    print("before request")
-
-# Manejo de CORS para OPTIONS
-""" @app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    return response """
+        else:
+            print("Ruta no encontrada + " + request.path)
+            return 'Ruta no encontrada', 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
