@@ -122,13 +122,13 @@ def add_contact_message(ws_id, phone_number, message):
         add_message(ws_id, phone_number, message, "user")
     except Exception as e:
         print(f"Error al añadir mensaje del bot para usuario {ws_id}: {str(e)}")
-        raise
+        raise   
 
 
-def add_chat_message(ws_id, phone_number, message):
+def add_chat_message(ws_id, phone_number, message, is_function_call=False):
     """Añade un mensaje del usuario a la conversación."""
     try:
-        add_message(ws_id, phone_number, message, "assistant")
+        add_message(ws_id, phone_number, message, "assistant" if not is_function_call else "tool")
     except Exception as e:
         print(f"Error al añadir mensaje del usuario {ws_id}: {str(e)}")
         raise
@@ -182,4 +182,14 @@ def get_whatsapp_token(ws_id: str) -> str:
     
     except Exception as e:
         logging.exception("Error al obtener token de WhatsApp: %s", str(e))
+        raise
+
+
+def update_contact_data(ws_id, phone_number, data):
+    """Actualiza los datos de un contacto."""
+    try:
+        contact_ref = get_contact_ref(ws_id, phone_number)
+        contact_ref.update(data)
+    except Exception as e:
+        print(f"Error al actualizar datos del contacto {phone_number} para {ws_id}: {str(e)}")
         raise

@@ -12,13 +12,12 @@ def get_chatbot_from_number(from_id: str):
         token = get_whatsapp_token(from_id)
         whatsapp_api_handler = WhatsAppAPIHandler(from_whatsapp_id=from_id, token=token)
 
-       
-
         if from_id in chatbot_configs:
             try:
                 chatbot = ChatbotModel(**chatbot_configs[from_id])
                 conversation_manager = ConversationManager(whatsapp_api_handler, chatbot)
                 return conversation_manager
+            
             except Exception as e:
                 logging.exception(f"Error al configurar el chatbot para {from_id}: {str(e)}")
                 raise

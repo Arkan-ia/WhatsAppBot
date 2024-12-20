@@ -17,6 +17,9 @@ class ChatbotModel:
         specific_prompt: str = "",
         pdf_prompt: str = "",
         extras: Dict[str, Any] = {},
+        tools: List[str] = [],
+        user_data: Dict[str, Any] = {},
+        user_data_keys: List[str] = [],
     ):
         self.name = name
         self.company = company
@@ -30,7 +33,10 @@ class ChatbotModel:
         self.pdf_prompt = pdf_prompt
         self.extras = extras
         self.chat_history = []
-
+        self.tools = tools
+        self.user_data = user_data
+        self.user_data_keys = user_data_keys
+        
     @property
     def system_prompt(self) -> str:
         return (
@@ -98,8 +104,12 @@ class ChatbotModel:
             "5. Si el usuario ya sabe qué producto o servicio está buscando, pregunta los siguientes datos: nombre, teléfono, número de documento, correo electrónico, y dirección"
             "6. Di el monto total de la compra"
             "7. Pide al usuario esperar unos minutos para iniciar el proceso de compra"
-            """ 
-            
+            f""" 
+            Estos son los datos que debes almacenar en la base de datos:
+            {self.user_data_keys}
+
+            Estos son los datos del usuario:
+            {self.user_data}
             """
         )
 
