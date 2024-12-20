@@ -1,4 +1,15 @@
 chatbot_configs = {
+            "511736975350831":{
+                "name": "Jorge",
+                "company": "Gano Excel",
+                "location": "Bogotá - Colombia", 
+                "vectorstore_path": "./src/vectorstores/juan_gano_excel",
+                "pdf_prompt": "El usuario ha dicho: '{user_message}'.\n¿Está el usuario solicitando explícitamente información de los productos? Responde 'TRUE' o 'FALSE'.",
+                "description": "En Gano Excel, nos dedicamos a la creación de productos con los más altos estándares de calidad en la búsqueda de tu bienestar. Descubre cómo nuestra gama única de productos, puede transformar tu vida.",
+                "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
+                "expressions": [""],
+                "specific_prompt": ""
+            },
             "541794965673706": {
                 # Zalee bot
                 "name": "Johan",
