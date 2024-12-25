@@ -8,7 +8,7 @@ chatbot_configs = {
                 "description": "En Gano Excel, nos dedicamos a la creación de productos con los más altos estándares de calidad en la búsqueda de tu bienestar. Descubre cómo nuestra gama única de productos, puede transformar tu vida.",
                 "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
                 "expressions": [""],
-                "specific_prompt": ""
+                "specific_prompt": "Ten muy en cuenta que normalmente los usuarios preguntan por cajas de café."
             },
             "541794965673706": {
                 # Zalee bot

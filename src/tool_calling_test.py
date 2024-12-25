@@ -54,4 +54,28 @@ if output.tool_calls:
         elif function_name == "store_user_data":
             store_user_data("400692489794103", "573142968931", args)
 
+        function_call_result_message = {
+            "role": "tool",
+            "content": {},
+            "tool_call_id": tool_call.id
+        }
+
+
+
+
+
+def ask_with_tool_data(prompt):
+    """Give LLM a given prompt and get an answer."""
+
+    completion = openai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        tools=[get_notify_payment_mail_tool(), get_store_user_data_tool()],
+
+    )
+
+    output = completion.choices[0].message
+    print(output)
+    return output
+
 

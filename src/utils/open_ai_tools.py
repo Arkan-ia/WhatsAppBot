@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict
 
 from src.db.firebase import update_contact_data
-from src.utils.notifications import send_mail
+from src.utils.notifications import send_email_notification
 
 
 
@@ -32,11 +32,11 @@ def notify_payment_mail(to: str):
         subject = "Nueva solicitud de pago"
         body = "Un cliente ha solicitado realizar un pago. Por favor revisa tu panel de control."
         
-        send_mail(to=to, subject=subject, body=body)
+        send_email_notification(to=to, message=body, subject=subject)
         logging.info(f"Correo de notificación de pago enviado a {to}")
     except Exception as e:
         logging.error(f"Error al enviar correo de notificación de pago a {to}: {str(e)}")
-        raise
+        
 
 
 def get_notify_payment_push_notification_tool():
@@ -91,29 +91,51 @@ def get_send_menu_pdf_tool():
 #     except Exception as e:
 #             logging.exception("Error al enviar el PDF del menú: %s", str(e))
 #             raise
+
 def get_store_user_data_tool(data: Dict[str, Any] = None):
     return {
         "type": "function",
         "function": {
             "name": "store_user_data",
-            "description": "Almacena información importante del usuario como su nombre, correo electrónico o condiciones médicas en la base de datos. Cada que el usuario envia alguno de estos datos, llama a esta función para almacenarlos.",
+            "description": """Almacena información importante del usuario en la base de datos. 
+IMPORTANTE: Debes llamar a esta función cada vez que el usuario mencione:
+- Su nombre o cómo se llama
+- Cualquier condición médica o enfermedad que padezca
+- Su correo electrónico
+
+Ejemplos de cuando llamar la función:
+- "Me llamo Juan"
+- "Soy María"
+- "Tengo diabetes"
+- "Padezco de hipertensión"
+- "Mi correo es usuario@email.com"
+- "Pueden contactarme en juan@gmail.com"
+
+No es necesario que el usuario proporcione todos los campos; envía solo los campos que el usuario haya mencionado.""",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "The name of the user, e.g. John Doe",
+                        "description": "El nombre del usuario. Extráelo cuando el usuario lo mencione de cualquier forma (ej: 'me llamo X', 'soy X', etc.)",
                     },
                     "email": {
                         "type": "string",
-                        "description": "The email address of the user, e.g. john@doe.com",
+                        "description": "El correo electrónico del usuario. Extráelo cuando el usuario lo mencione.",
                     },
                     "sickness": {
                         "type": "string",
-                        "description": "The sickness of the user, e.g. cold, flu, etc.",
+                        "description": "Cualquier enfermedad o condición médica que el usuario mencione padecer (ej: diabetes, hipertensión, etc.)",
+                    },
+                    "cedula": {
+                        "type": "string",
+                        "description": "La cédula del usuario. Extráelo cuando el usuario lo mencione.",
+                    },
+                    "direction": {
+                        "type": "string",
+                        "description": "La dirección del usuario. Extráelo cuando el usuario lo mencione.",
                     },
                 },
-                #"required": ["name", "email", "id", "sickness"],
             },
         },
     }
