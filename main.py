@@ -1,13 +1,13 @@
-from flask import Flask, Request
+from flask import Flask, jsonify, request,Request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from src.utils.notifications import send_email_notification
 from src.views.whatsapp_webhook import *
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-
 
 def main(request: Request):
     """
@@ -34,6 +34,12 @@ def main(request: Request):
 
         elif request.path == '/send-message' and request.method == 'POST':
             return send_message()
+        
+        elif request.path == '/send-email' and request.method == 'GET':
+            return send_email_notification("kevinskate.kg@gmail.com", "Cuerpo del email", "Prueba")
+        
+        elif request.path == '/ping' and request.method == 'GET':
+            return jsonify({"message": "pong"}), 200
 
         else:
             print("Ruta no encontrada + " + request.path)

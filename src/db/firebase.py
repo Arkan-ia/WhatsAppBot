@@ -1,3 +1,4 @@
+import io
 import logging
 from typing import List
 import firebase_admin
@@ -169,6 +170,22 @@ def upload_media_to_storage(image, path):
         return blob.generate_signed_url(expiration=60*60)
     except Exception as e:
         print(f"Error al subir archivo multimedia: {str(e)}")
+        raise
+    
+def upload_audio_to_storage(audio_media_response, file_name):
+    """Uploads audio to Firebase Storage."""
+    try:
+        bucket = storage.bucket("arcania-c4669.appspot.com")
+        blob = bucket.blob(file_name)
+        
+        file_stream = io.BytesIO(audio_media_response.content)
+
+        blob.upload_from_file(file_stream, content_type="audio/mpeg")
+        blob.make_public()
+
+        return blob.public_url
+    except Exception as e:
+        print(f"Error al subir archivo multimedia [AUDIO]: {str(e)}")
         raise
 
 def get_whatsapp_token(ws_id: str) -> str:
