@@ -7,7 +7,7 @@ import json
 import openai
 from dotenv import load_dotenv
 
-from src.utils.open_ai_tools import get_notify_payment_mail_tool, get_store_user_data_tool, notify_payment_mail, store_user_data
+from src.common.open_ai_tools import get_notify_payment_mail_tool, get_store_user_data_tool, notify_payment_mail, store_user_data
 
 # --------------------------------------------------------------
 # Load OpenAI API Token From the .env File

@@ -1,10 +1,10 @@
-from src.db.firebase import add_chat_message
+from src.common.whatsapp.models.models import TemplateMessage, TextMessage
 from flask import jsonify, request
 import os
 import logging
 from src.chatbot_router import get_chatbot_from_number
-from src.whatsapp_api_handler import WhatsAppAPIHandler
-from src.utils.whatsapp_utils import is_valid_whatsapp_message
+from src.common.utils.whatsapp_utils import is_valid_whatsapp_message, send_whatsapp_message
+from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 
 def verify():
     try:
@@ -70,13 +70,12 @@ def start_conversation():
         token = body.get('token')
         template = body.get('template')
         
-        bot = WhatsAppAPIHandler(api_url=f"https://graph.facebook.com/v21.0/{from_id}/messages", token=token)
-
         if not to_number or not from_id:
             return jsonify({"status": "error", "message": "Faltan parámetros requeridos"}), 400
 
-        bot.start_conversation(template=template, to_number=to_number, from_id=from_id)
-        
+        message = TemplateMessage(template=template, to_number=to_number, from_id=from_id)
+        send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+
         return jsonify({
             "status": "ok",
             "message": f"Conversación iniciada con éxito para el número {to_number}"
@@ -96,11 +95,9 @@ def send_message():
     if not to_number or not from_id or not message:
         return jsonify({"status": "error", "message": "Faltan parámetros requeridos"}), 400
     
-    bot = WhatsAppAPIHandler(api_url=f"https://graph.facebook.com/v21.0/{from_id}/messages", token=token)
-    
-    data = bot.text_message(to_number, message)
-    bot.send_whatsapp_message(data)
+    message = TextMessage(number=to_number, text=message)
+    send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
 
-    add_chat_message(from_id, to_number, message)
+    MessageFirebaseRepository().create_chat_message(from_id, to_number, message)
     
     return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200

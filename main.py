@@ -1,7 +1,7 @@
-from flask import Flask, jsonify, request,Request
+from flask import Flask, jsonify, Request
 from flask_cors import CORS
 from dotenv import load_dotenv
-from src.utils.notifications import send_email_notification
+from src.common.utils.notifications import send_email_notification
 from src.views.whatsapp_webhook import *
 
 load_dotenv()
