@@ -29,8 +29,8 @@ def main(request: Request):
         elif request.path == '/' and request.method == 'POST':
             return process_message()
 
-        elif request.path == '/start-conversation' and request.method == 'POST':
-            return start_conversation()
+        elif request.path == '/send-template' and request.method == 'POST':
+            return send_template_message()
 
         elif request.path == '/send-message' and request.method == 'POST':
             return send_message()
