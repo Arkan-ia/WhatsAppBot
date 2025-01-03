@@ -10,16 +10,17 @@ class WhatsAppMessage(ABC):
 
 
 class TemplateMessage(WhatsAppMessage):
-    def __init__(self, to_number, template):
+    def __init__(self, to_number, template, code="es"):
         self.to_number = to_number
         self.template = template
+        self.code = code
 
     def create_message(self):
         return json.dumps({
             "messaging_product": "whatsapp",
             "to": self.to_number,
             "type": "template",
-            "template": {"name": self.template, "language": {"code": "es"}},
+            "template": {"name": self.template, "language": {"code": self.code}},
         })
 
 
