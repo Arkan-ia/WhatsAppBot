@@ -5,6 +5,8 @@ import logging
 from src.chatbot_router import get_chatbot_from_number
 from src.common.utils.whatsapp_utils import is_valid_whatsapp_message, send_whatsapp_message
 from src.data.sources.firebase.message_impl import MessageFirebaseRepository
+import pandas as pd
+
 
 def verify():
     try:
@@ -84,6 +86,35 @@ def start_conversation():
         logging.error(f"Error al iniciar la conversación: {str(e)}")
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
 
+def send_massive_message():
+    if 'file' not in request.files:
+        return {"error": "No se encontró un archivo en la solicitud"}, 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return {"error": "El archivo está vacío"}, 400
+    file_data = pd.read_excel(file, header=None)
+    users = file_data[0].tolist()
+    
+    form = request.form
+    requiered_params = ['from_id', 'token', 'message']
+    for param in requiered_params:
+        if param not in form:
+            return jsonify({"status": "error", "message": f"El parámetro {param} es requerido"}), 400
+    from_id = form.get('from_id')
+    token = form.get('token')
+    message = form.get('message')
+    
+    for number in users:
+        print(f"Enviando mensaje a {number}")
+        message = TemplateMessage(to_number=number, template="hello_world", code="en_US")
+        send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+        # to_number = users[i]
+        # message = TextMessage(number=to_number, text=message)
+        # send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+
+
+    return jsonify({"status": "ok", "message": f"Mensaje enviado con éxito a {len(users)} usuarios"}), 200
 
 def send_message():
     body = request.get_json()
