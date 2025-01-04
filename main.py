@@ -10,30 +10,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-def handle_massive_send(request):
-    """
-    Maneja la carga y procesamiento del archivo Excel para envío masivo.
-    """
-    if 'file' not in request.files:
-        return {"error": "No se encontró un archivo en la solicitud"}, 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return {"error": "El archivo está vacío"}, 400
-    
-    return process_excel_file(file)
-
-def process_excel_file(file_stream):
-    """
-    Procesa el archivo Excel cargado y extrae los datos relevantes desde el flujo.
-    """
-    try:
-        data = pd.read_excel(file_stream, header=None)
-
-        users = data[0].tolist()
-        return {"users": users}, 200
-    except Exception as e:
-        return {"error": f"Error procesando el archivo: {str(e)}"}, 500
 
 def main(request: Request):
     """

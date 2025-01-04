@@ -104,15 +104,15 @@ def send_massive_message():
     from_id = form.get('from_id')
     token = form.get('token')
     message = form.get('message')
+    template = form.get('template')
+    language_code = form.get('language_code')
     
     for number in users:
         print(f"Enviando mensaje a {number}")
-        message = TemplateMessage(to_number=number, template="hello_world", code="en_US")
+        message = TemplateMessage(to_number=number, template=template, code=language_code)
+        if not template:
+            message = TextMessage(number=number, text=message)
         send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
-        # to_number = users[i]
-        # message = TextMessage(number=to_number, text=message)
-        # send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
-
 
     return jsonify({"status": "ok", "message": f"Mensaje enviado con éxito a {len(users)} usuarios"}), 200
 
