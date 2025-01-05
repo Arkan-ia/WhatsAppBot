@@ -98,7 +98,7 @@ def send_massive_message():
     file = request.files['file']
     if file.filename == '':
         return {"error": "El archivo está vacío"}, 400
-    file_data = pd.read_excel(file, header=None)
+    file_data = pd.read_excel(file, header=None, converters={0: str})
     users = file_data[0].tolist()
     
     form = request.form
@@ -113,6 +113,8 @@ def send_massive_message():
     language_code = form.get('language_code')
     
     for number in users:
+        if not number.isdigit():
+            continue
         print(f"Enviando mensaje a {number}")
         message = TemplateMessage(to_number=number, template=template, code=language_code)
         db_content = f"template: {message.template}"
