@@ -1,52 +1,36 @@
 from abc import ABC, abstractmethod
 from injector import Injector, Module, singleton, inject
 
-# Definición de la interfaz abstracta Animal
-class Animal(ABC):
-    @abstractmethod
-    def make_sound(self) -> str:
-        pass
+from src.infrastructure.di.container import chatbot_service, http_manager
+from src.infrastructure.shared.http.http_manager import HttpManager, HttpModule
 
-    @abstractmethod
-    def move(self) -> str:
-        pass
 
-# Implementación concreta de Dog
-class Dog(Animal):
-    def make_sound(self) -> str:
-        return "Bark"
+print(chatbot_service.run("Hola", "Test market"))
 
-    def move(self) -> str:
-        return "Runs"
-
-# Implementación concreta de Bird
-class Bird(Animal):
-    def make_sound(self) -> str:
-        return "Chirp"
-
-    def move(self) -> str:
-        return "Flies"
-
-# Servicio que utiliza Animal como dependencia
-class AnimalService:
+class User:
     @inject
-    def __init__(self, animal: Animal) -> None:
-        self.animal = animal
+    def __init__(self, http_manager: HttpManager):
+        self.http_manager = http_manager
+        self.http_manager.set_base_url("https://jsonplaceholder.typicode.com")
+        
+    def get_posts(self, user_id: int):
+        return self.http_manager.get(f"posts/{user_id}")
 
-    def describe_animal(self) -> str:
-        return f"Sound: {self.animal.make_sound()}, Movement: {self.animal.move()}"
+class Pokemons:
+    @inject
+    def __init__(self, http_manager: HttpManager):
+        self.http_manager = http_manager
+        self.http_manager.set_base_url("https://pokeapi.co/api/v2")
+        
+    def get_pokemons(self):
+        return self.http_manager.get("ability/?limit=20&offset=20")
 
-# Configuración del contenedor de inyección
-class AnimalModule(Module):
-    def configure(self, binder) -> None:
-        # Aquí configuramos qué implementación usar para la interfaz Animal
-        binder.bind(Animal, to=Bird, scope=singleton)  # Cambiar Dog por Bird si deseas
 
-# Crear el contenedor e inyectar dependencias
-injector = Injector([AnimalModule])
+injector = Injector([HttpModule])
+user = injector.get(User)
+poke = injector.get(Pokemons)
+posts = user.get_posts(1)
+print("posts ->",posts)
+pokemons = poke.get_pokemons()
 
-# Instancia de AnimalService con dependencia inyectada
-animal_service = injector.get(AnimalService)
-
-# Uso del servicio
-print(animal_service.describe_animal())  # Output: Sound: Bark, Movement: Runs
+print("poke ->",pokemons)
