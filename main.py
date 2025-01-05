@@ -3,11 +3,13 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from src.common.utils.notifications import send_email_notification
 from src.views.whatsapp_webhook import *
+import pandas as pd
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
 
 def main(request: Request):
     """
@@ -40,10 +42,17 @@ def main(request: Request):
         
         elif request.path == '/ping' and request.method == 'GET':
             return jsonify({"message": "pong"}), 200
+        
+        elif request.path == '/send-message/massive' and request.method == 'POST':
+            return send_massive_message()
 
         else:
             print("Ruta no encontrada + " + request.path)
             return 'Ruta no encontrada', 404
 
+app.add_url_rule('/<path:path>', 'main', lambda path: main(request), methods=['GET', 'POST', 'OPTIONS'])
+app.add_url_rule('/', 'main_root', lambda: main(request), methods=['GET', 'POST', 'OPTIONS']) 
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
+    
