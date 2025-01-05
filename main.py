@@ -3,7 +3,6 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from src.common.utils.notifications import send_email_notification
 from src.views.whatsapp_webhook import *
-import pandas as pd
 
 load_dotenv()
 

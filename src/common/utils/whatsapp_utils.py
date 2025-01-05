@@ -3,7 +3,8 @@ from typing import Any, Dict
 
 import requests
 from src.common.utils.openai_utils import get_text_from_audio
-from src.common.whatsapp.models.models import WhatsAppMessage
+from src.common.whatsapp.models.models import TemplateMessage, TextMessage, WhatsAppMessage
+from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 
 
 def is_valid_whatsapp_message(body):
@@ -73,4 +74,10 @@ def send_whatsapp_message(
     response = requests.post(api_url, headers=headers, data=data)
 
     if response.status_code != 200:
+        # if isinstance(message, TemplateMessage):
+        #     content = message.template
+        # elif  isinstance(message, TextMessage):
+        #     content = message.text
+
+        # MessageFirebaseRepository().create_chat_message(from_whatsapp_id, message.to_number, message)
         logging.error(response.json())

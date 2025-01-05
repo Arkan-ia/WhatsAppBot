@@ -4,6 +4,9 @@ from typing import Dict, Any, List
 
 
 class WhatsAppMessage(ABC):
+    def __init__(self, to_number):
+        self.to_number = to_number
+
     @abstractmethod
     def create_message(self) -> Dict[str, Any]:
         pass
@@ -38,14 +41,14 @@ class TemplateMessage(WhatsAppMessage):
 
 class TextMessage(WhatsAppMessage):
     def __init__(self, number, text):
-        self.number = number
+        self.to_number = number
         self.text = text
 
     def create_message(self):
         return json.dumps({
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": self.number,
+            "to": self.to_number,
             "type": "text",
             "text": {"body": self.text},
         })
@@ -67,7 +70,7 @@ class ButtonReplyMessage(WhatsAppMessage):
     def __init__(
         self, number: str, options: List[str], body: str, footer: str, session_id: str
     ):
-        self.number = number
+        self.to_number = number
         self.options = options
         self.body = body
         self.footer = footer
@@ -89,7 +92,7 @@ class ButtonReplyMessage(WhatsAppMessage):
         return json.dumps({
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": self.number,
+            "to": self.to_number,
             "type": "interactive",
             "interactive": {
                 "type": "button",
@@ -104,7 +107,7 @@ class ListReplyMessage(WhatsAppMessage):
     def __init__(
         self, number: str, options: List[str], body: str, footer: str, session_id: str
     ):
-        self.number = number
+        self.to_number = number
         self.options = options
         self.body = body
         self.footer = footer
@@ -124,7 +127,7 @@ class ListReplyMessage(WhatsAppMessage):
         return json.dumps({
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": self.number,
+            "to": self.to_number,
             "type": "interactive",
             "interactive": {
                 "type": "list",
@@ -140,7 +143,7 @@ class ListReplyMessage(WhatsAppMessage):
 
 class DocumentMessage(WhatsAppMessage):
     def __init__(self, number: str, url: str, caption: str, filename: str):
-        self.number = number
+        self.to_number = number
         self.url = url
         self.caption = caption
         self.filename = filename
@@ -149,7 +152,7 @@ class DocumentMessage(WhatsAppMessage):
         return json.dumps({
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": self.number,
+            "to": self.to_number,
             "type": "document",
             "document": {
                 "link": self.url,
@@ -161,7 +164,7 @@ class DocumentMessage(WhatsAppMessage):
 
 class ReplyReactionMessage(WhatsAppMessage):
     def __init__(self, number: str, message_id: str, emoji: str):
-        self.number = number
+        self.to_number = number
         self.message_id = message_id
         self.emoji = emoji
 
@@ -169,7 +172,7 @@ class ReplyReactionMessage(WhatsAppMessage):
         return json.dumps({
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": self.number,
+            "to": self.to_number,
             "type": "reaction",
             "reaction": {"message_id": self.message_id, "emoji": self.emoji},
         })
@@ -177,7 +180,7 @@ class ReplyReactionMessage(WhatsAppMessage):
 
 class ReplyTextMessage(WhatsAppMessage):
     def __init__(self, number: str, message_id: str, text: str):
-        self.number = number
+        self.to_number = number
         self.message_id = message_id
         self.text = text
 
@@ -185,7 +188,7 @@ class ReplyTextMessage(WhatsAppMessage):
         return json.dumps({
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
-            "to": self.number,
+            "to": self.to_number,
             "context": {"message_id": self.message_id},
             "type": "text",
             "text": {"body": self.text},
