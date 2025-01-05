@@ -61,7 +61,7 @@ def process_message():
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
 
 
-def start_conversation():
+def send_template_message():
     try:
         body = request.get_json()
         if not body:
