@@ -3,7 +3,6 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from src.common.utils.notifications import send_email_notification
 from src.views.whatsapp_webhook import *
-import pandas as pd
 
 load_dotenv()
 
@@ -31,8 +30,8 @@ def main(request: Request):
         elif request.path == '/' and request.method == 'POST':
             return process_message()
 
-        elif request.path == '/start-conversation' and request.method == 'POST':
-            return start_conversation()
+        elif request.path == '/send-template' and request.method == 'POST':
+            return send_template_message()
 
         elif request.path == '/send-message' and request.method == 'POST':
             return send_message()

@@ -20,6 +20,7 @@ def verify():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 403
     
+    
 def process_message():
     body = request.get_json()
 
@@ -61,7 +62,7 @@ def process_message():
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
 
 
-def start_conversation():
+def send_template_message():
     try:
         body = request.get_json()
         if not body:
@@ -77,6 +78,9 @@ def start_conversation():
 
         message = TemplateMessage(template=template, to_number=to_number, from_id=from_id)
         send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+        
+        db_content = f"template: {message.template}"
+        MessageFirebaseRepository().create_chat_message(from_id, message.to_number, db_content)
 
         return jsonify({
             "status": "ok",
@@ -85,6 +89,7 @@ def start_conversation():
     except Exception as e:
         logging.error(f"Error al iniciar la conversación: {str(e)}")
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
+
 
 def send_massive_message():
     if 'file' not in request.files:
@@ -110,9 +115,14 @@ def send_massive_message():
     for number in users:
         print(f"Enviando mensaje a {number}")
         message = TemplateMessage(to_number=number, template=template, code=language_code)
+        db_content = f"template: {message.template}"
+
         if not template:
             message = TextMessage(number=number, text=message)
+            db_content = message.text
+
         send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+        MessageFirebaseRepository().create_chat_message(from_id, message.to_number, db_content)
 
     return jsonify({"status": "ok", "message": f"Mensaje enviado con éxito a {len(users)} usuarios"}), 200
 
