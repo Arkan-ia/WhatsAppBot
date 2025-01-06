@@ -13,7 +13,7 @@ chatbot_configs = {
             "notify_payment_mail": lambda: notify_payment_mail(
                 to="lozanojohan321@gmail.com"
             ),
-            "store_user_data": lambda args: store_user_data("450361964838178", args),
+            "store_user_data": lambda kargs: store_user_data("450361964838178", kargs["phone_number"], kargs),
         },
         "tools": [get_store_user_data_tool(), get_notify_payment_mail_tool()],
         "specific_prompt": "Ten muy en cuenta que normalmente los usuarios preguntan por cajas de café."

@@ -79,7 +79,7 @@ def send_template_message():
         message = TemplateMessage(template=template, to_number=to_number, from_id=from_id)
         send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
         
-        db_content = f"template: {message.template}"
+        db_content = get_template_message_content(message.template)
         MessageFirebaseRepository().create_chat_message(from_id, message.to_number, db_content)
 
         return jsonify({
@@ -106,6 +106,7 @@ def send_massive_message():
     for param in requiered_params:
         if param not in form:
             return jsonify({"status": "error", "message": f"El parámetro {param} es requerido"}), 400
+        
     from_id = form.get('from_id')
     token = form.get('token')
     message = form.get('message')
@@ -115,7 +116,7 @@ def send_massive_message():
     for number in users:
         print(f"Enviando mensaje a {number}")
         message = TemplateMessage(to_number=number, template=template, code=language_code)
-        db_content = f"template: {message.template}"
+        db_content = get_template_message_content(message.template)
 
         if not template:
             message = TextMessage(number=number, text=message)
@@ -142,3 +143,8 @@ def send_message():
     MessageFirebaseRepository().create_chat_message(from_id, to_number, message)
     
     return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
+
+
+## -------- TODO: ##
+def get_template_message_content(*args):
+    return "Hola, cómo estás? Quieres mejorar tu salud con los productos del Ganoderma o quieres saber más sobre nuestros productos?"

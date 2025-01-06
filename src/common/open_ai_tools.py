@@ -33,9 +33,12 @@ def notify_payment_mail(to: str):
         
         send_email_notification(to=to, message=body, subject=subject)
         logging.info(f"Correo de notificación de pago enviado a {to}")
+        return f"Correo de notificación de pago enviado a {to}"
+
     except Exception as e:
         logging.error(f"Error al enviar correo de notificación de pago a {to}: {str(e)}")
         
+
 
 
 def get_notify_payment_push_notification_tool():
@@ -143,7 +146,7 @@ No es necesario que el usuario proporcione todos los campos; envía solo los cam
         },
     }
 
-def store_user_data(ws_id: str, phone_number: str, data: Dict[str, Any]):
+def store_user_data(ws_id: str, phone_number: str, data: Dict[str, Any] = None):
     """
     Almacena los datos del usuario en la base de datos.
     
@@ -154,5 +157,7 @@ def store_user_data(ws_id: str, phone_number: str, data: Dict[str, Any]):
         None
     """
     ContactFirebaseRepository().update_contact(ws_id, phone_number, data)
+
+    return "Usuario actualizado"
 
 

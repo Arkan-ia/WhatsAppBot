@@ -38,8 +38,10 @@ def upload_audio_to_storage(audio_media_response, file_name):
 
 
 
-def get_contact_ref(ws_id, phone_number):
+def get_contact_ref(ws_id, phone_number: str):
     """Obtiene la referencia de un contacto."""
+    if len(phone_number) != 12: raise Exception("Los números a consultar deben tener su respectivo codigo de país")
+    
     try:
         user_ref = db.collection("users").where("ws_id", "==", ws_id).limit(1).get()
         if not user_ref:
@@ -48,6 +50,7 @@ def get_contact_ref(ws_id, phone_number):
             )
             return None
         user_doc = user_ref[0].reference
+        # TODO: A veces separa a un contacto de otro debido al 57. Hacer que sean iguales.
         contact_query = (
             user_doc.collection("contacts")
             .where("phone_number", "==", phone_number)

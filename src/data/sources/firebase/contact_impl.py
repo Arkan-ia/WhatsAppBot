@@ -1,3 +1,4 @@
+import logging
 from src.data.repositories.contact_repository import ContactRepository
 from src.data.sources.firebase.utils import get_contact_ref
 
@@ -18,6 +19,7 @@ class ContactFirebaseRepository(ContactRepository):
         try:
             contact_ref = get_contact_ref(ws_id, phone_number)
             contact_ref.update(data)
+            logging.error(f"Datos de {phone_number} actualizados con {data}")
         except Exception as e:
             print(
                 f"Error al actualizar datos del contacto {phone_number} para {ws_id}: {str(e)}"
