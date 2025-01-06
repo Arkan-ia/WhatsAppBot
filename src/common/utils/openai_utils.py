@@ -96,5 +96,5 @@ def generate_answer(messages, tools):
         temperature=0.1,
     )
 
-    response = response.choices[0].message.content
+    response = response.choices[0].message
     return response

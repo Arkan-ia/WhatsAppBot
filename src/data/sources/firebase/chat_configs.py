@@ -10,16 +10,28 @@ chatbot_configs = {
         "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
         "expressions": [""],
         "tool_calls": {
-            "notify_payment_mail": lambda: notify_payment_mail(
+            "notify_payment_mail": lambda kargs: notify_payment_mail(
                 to="lozanojohan321@gmail.com"
             ),
-            "store_user_data": lambda args: store_user_data("450361964838178", args),
+            "store_user_data": lambda kargs: store_user_data("450361964838178", kargs["phone_number"], kargs),
         },
         "tools": [get_store_user_data_tool(), get_notify_payment_mail_tool()],
         "specific_prompt": "Ten muy en cuenta que normalmente los usuarios preguntan por cajas de café."
         """
-Antes de pedir la oden, asegurate de saber exactamente que producto es el o los productos que el usuario quiere.
+Antes de pedir la orden, asegurate de saber exactamente que producto es el o los productos que el usuario quiere.
                     
+Esta es la promoción actual: 
+
+Por la compra de 2 o más cajas de nuestro delicioso café 3 en 1 o Clásico, obtén un precio exclusivo de $84 por caja.
+Promoción válida hasta el 15 de enero.
+
+Si compras de 2 cajas a un precio de $200,000, recibes un obsequio exclusivo a elegir entre:
+Vaso mezclador
+Afeitadora eléctrica
+Plancha portátil para el cabello
+Mini parlante
+Envío completamente gratuito
+
 
 ### **Gano Café 3 en 1 (Capuchino):**  
 - **Beneficios del Gano Café 3 en 1:** Refuerza el sistema inmunológico, reduce presión arterial y colesterol, fortalece huesos y dientes, desintoxica el cuerpo, alivia mareos y fatiga crónica, entre otros.  

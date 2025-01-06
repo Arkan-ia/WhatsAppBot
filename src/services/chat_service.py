@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Dict, Any
 
 from src.common.utils.openai_utils import add_context_to_chatbot, generate_answer
@@ -12,8 +13,9 @@ class ChatbotService:
         self.chatbot_model = chatbot_model
 
     def answer_conversation(self, from_whatsapp_id, to_number, question):
-        messages = MessageFirebaseRepository().get_messages(from_whatsapp_id, to_number)
+        messages = MessageFirebaseRepository().get_messages(from_whatsapp_id, to_number)[-10:]
         user_data = ContactFirebaseRepository().get_contact(from_whatsapp_id, to_number)
+        
         return self.generate_answer_from_text_with_vector_db(question, user_data, messages, self.chatbot_model.tools)
 
     def generate_answer_from_text_with_vector_db(
@@ -32,12 +34,14 @@ class ChatbotService:
 
             messages = [{"role": "system", "content": system_prompt}, *messages]
             response = generate_answer(messages, tools)
+            logging.error(f"Response: {response}")
             return response
-
+        
         except Exception as e:
+            logging.error(e)
             raise
 
-    def generate_answer_from_image(question, image_url, messages, tools):
+    def generate_answer_from_image(self, question, image_url, messages, tools):
         image_message = {"type": "image_url", "image_url": {"url": image_url}}
 
         try:
