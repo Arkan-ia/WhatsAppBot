@@ -84,7 +84,7 @@ def get_whatsapp_token(ws_id: str) -> str:
                 f"No se encontró ningún usuario al obtener token de WhatsApp para {ws_id}"
             )
             return
-        token = user_ref[0].get("whatsapp_token")
+        token = user_ref[0].get("ws_token")
         return token
 
     except Exception as e:

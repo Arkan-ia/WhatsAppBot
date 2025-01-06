@@ -5,7 +5,7 @@ from flask import jsonify, request
 import os
 import logging
 from src.chatbot_router import get_chatbot_from_number
-from src.common.utils.whatsapp_utils import is_valid_whatsapp_message, send_whatsapp_message
+from src.common.utils.whatsapp_utils import is_reaction_whatsapp_message, is_valid_whatsapp_message, send_whatsapp_message
 from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 import pandas as pd
 
@@ -47,6 +47,10 @@ def process_message():
     try:
         if is_valid_whatsapp_message(body):
             print("Starting bot creation...")
+
+            if is_reaction_whatsapp_message(message):
+                return jsonify({"status": "ok"}), 200
+
             chatbot = get_chatbot_from_number(from_id)
             print("Bot created successfully.")
             chatbot.manage_incoming_message(message)
@@ -172,9 +176,10 @@ def send_message():
         return jsonify({"status": "error", "message": "Faltan parámetros requeridos"}), 400
     
     message = TextMessage(number=to_number, text=message)
-    send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
-
-    MessageFirebaseRepository().create_chat_message(from_id, to_number, message.text)
+    call = send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+    
+    if call["status"] == "success":
+        MessageFirebaseRepository().create_chat_message(from_id, to_number, message.text)
     
     return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
 
