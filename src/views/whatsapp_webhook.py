@@ -164,6 +164,8 @@ def send_message():
     token = body.get('token')
     message = body.get('message')
 
+    print(body)
+
     if not to_number or not from_id or not message:
         return jsonify({"status": "error", "message": "Faltan parámetros requeridos"}), 400
     
