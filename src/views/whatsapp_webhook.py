@@ -1,3 +1,6 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+import time
 from src.common.whatsapp.models.models import TemplateMessage, TextMessage
 from flask import jsonify, request
 import os
@@ -91,6 +94,11 @@ def send_template_message():
         return jsonify({"status": "error", "message": "Error interno del servidor"}), 500
 
 
+def batchify(iterable, batch_size):
+    """Divide un iterable en sublistas de tamaño batch_size."""
+    for i in range(0, len(iterable), batch_size):
+        yield iterable[i:i + batch_size]
+
 def send_massive_message():
     if 'file' not in request.files:
         return {"error": "No se encontró un archivo en la solicitud"}, 400
@@ -100,33 +108,52 @@ def send_massive_message():
         return {"error": "El archivo está vacío"}, 400
     file_data = pd.read_excel(file, header=None, converters={0: str})
     users = file_data[0].tolist()
-    
+
     form = request.form
-    requiered_params = ['from_id', 'token', 'message']
-    for param in requiered_params:
+    required_params = ['from_id', 'token']
+    for param in required_params:
         if param not in form:
             return jsonify({"status": "error", "message": f"El parámetro {param} es requerido"}), 400
+
     from_id = form.get('from_id')
     token = form.get('token')
     message = form.get('message')
     template = form.get('template')
     language_code = form.get('language_code')
-    
-    for number in users:
-        if not number.isdigit():
+
+    messages = []
+    for user in users:
+        if not user.isdigit():
             continue
-        print(f"Enviando mensaje a {number}")
-        message = TemplateMessage(to_number=number, template=template, code=language_code)
-        db_content = f"template: {message.template}"
-
+        msg = TemplateMessage(template=template, to_number=user, code=language_code)
         if not template:
-            message = TextMessage(number=number, text=message)
-            db_content = message.text
+            msg = TextMessage(number=user, text=message)
+        messages.append(msg)
 
-        send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
-        MessageFirebaseRepository().create_chat_message(from_id, message.to_number, db_content)
+    batch_size = 20
+    def send_message_batch(batch):
+        results = []
+        with ThreadPoolExecutor(max_workers=batch_size) as executor:
+            results = list(executor.map(
+                lambda msg: send_whatsapp_message(from_id, token, msg),
+                batch
+            ))
+        return results
 
-    return jsonify({"status": "ok", "message": f"Mensaje enviado con éxito a {len(users)} usuarios"}), 200
+    all_results = []
+    for batch in batchify(messages, batch_size):
+        batch_results = send_message_batch(batch)
+        all_results.extend(batch_results)
+        time.sleep(0.02)
+
+    success_requests = sum(1 for result in all_results if result["status"] == "success")
+    error_requests = len(users) - success_requests
+
+    return jsonify({
+        "status": "ok",
+        "message": f"Mensajes enviados con éxito a {success_requests} usuarios, {error_requests} errores",
+        "details": all_results
+    }), 200
 
 def send_message():
     body = request.get_json()

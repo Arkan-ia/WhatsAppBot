@@ -69,15 +69,15 @@ def send_whatsapp_message(
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}",
     }
-
-    data = message.create_message()
-    response = requests.post(api_url, headers=headers, data=data)
-
-    if response.status_code != 200:
-        # if isinstance(message, TemplateMessage):
-        #     content = message.template
-        # elif  isinstance(message, TextMessage):
-        #     content = message.text
-
-        # MessageFirebaseRepository().create_chat_message(from_whatsapp_id, message.to_number, message)
-        logging.error(response.json())
+    
+    try:
+        data = message.create_message()
+        response = requests.post(api_url, headers=headers, data=data)
+        if response.status_code != 200:
+            # TODO: Print only in productions
+            logging.info(f"Status code: {response.status_code}.")
+            raise Exception(f"Failed to send message. Status code: {response.status_code}. Repsonse:{response.json()}")
+        return {"status": "success", "number": message.to_number}
+    except Exception as e:
+        logging.error(f"Error sending message: {str(e)}")
+        return {"status": "error", "number": message.to_number, "message": str(e) }
