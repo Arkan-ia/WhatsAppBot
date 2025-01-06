@@ -3,7 +3,7 @@ from flask import jsonify, request
 import os
 import logging
 from src.chatbot_router import get_chatbot_from_number
-from src.common.utils.whatsapp_utils import is_valid_whatsapp_message, send_whatsapp_message
+from src.common.utils.whatsapp_utils import is_reaction_whatsapp_message, is_valid_whatsapp_message, send_whatsapp_message
 from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 import pandas as pd
 
@@ -45,6 +45,10 @@ def process_message():
     try:
         if is_valid_whatsapp_message(body):
             print("Starting bot creation...")
+
+            if is_reaction_whatsapp_message(message):
+                return jsonify({"status": "ok"}), 200
+
             chatbot = get_chatbot_from_number(from_id)
             print("Bot created successfully.")
             chatbot.manage_incoming_message(message)
@@ -147,4 +151,7 @@ def send_message():
 
 ## -------- TODO: ##
 def get_template_message_content(*args):
-    return "Hola, cómo estás? Quieres mejorar tu salud con los productos del Ganoderma o quieres saber más sobre nuestros productos?"
+    return """☕✨ ¡Feliz Año Nuevo! ✨☕
+
+Si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, te damos un precio especial. 
+La promo es hasta el 15 de enero. 🏃‍♀"""

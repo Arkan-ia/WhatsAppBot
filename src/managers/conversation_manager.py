@@ -26,6 +26,8 @@ class ConversationManager:
             message (Dict[str, Any]): El mensaje entrante con toda su información
         """
         try:
+            logging.error(f"Mensaje recivido {message}")
+
             self.message_repository.create_contact_message(
                 self.from_whatsapp_id,
                 message["from"],

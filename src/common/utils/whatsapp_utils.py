@@ -21,6 +21,11 @@ def is_valid_whatsapp_message(body):
     )
 
 
+def is_reaction_whatsapp_message(message):
+    logging.info("Readed reaction message")
+    return message["type"] == "reaction"
+
+
 def get_whatsapp_message(message: Dict) -> str:
     """
     Extract the text from an incoming WhatsApp message.
@@ -35,6 +40,7 @@ def get_whatsapp_message(message: Dict) -> str:
         return "mensaje no reconocido"
 
     message_type = message["type"]
+    
     if message_type == "text":
         return message["text"]["body"]
     elif message_type == "audio":
