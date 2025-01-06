@@ -115,14 +115,14 @@ def send_massive_message():
     
     for number in users:
         print(f"Enviando mensaje a {number}")
-        message = TemplateMessage(to_number=number, template=template, code=language_code)
-        db_content = get_template_message_content(message.template)
+        ws_message = TemplateMessage(to_number=number, template=template, code=language_code)
+        db_content = get_template_message_content(ws_message.template)
 
         if not template:
-            message = TextMessage(number=number, text=message)
-            db_content = message.text
+            ws_message = TextMessage(number=number, text=message)
+            db_content = ws_message.text
 
-        send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+        send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=ws_message)
         MessageFirebaseRepository().create_chat_message(from_id, message.to_number, db_content)
 
     return jsonify({"status": "ok", "message": f"Mensaje enviado con éxito a {len(users)} usuarios"}), 200
@@ -140,7 +140,7 @@ def send_message():
     message = TextMessage(number=to_number, text=message)
     send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
 
-    MessageFirebaseRepository().create_chat_message(from_id, to_number, message)
+    MessageFirebaseRepository().create_chat_message(from_id, to_number, message.text)
     
     return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
 

@@ -29,9 +29,13 @@ def notify_payment_mail(to: str):
     """
     try:
         subject = "Nueva solicitud de pago"
-        body = "Un cliente ha solicitado realizar un pago. Por favor revisa tu panel de control."
+        body = """Un cliente ha solicitado realizar un pago. Por favor revisa tu panel de control en https://arkania.flutterflow.app/chats"""
         
         send_email_notification(to=to, message=body, subject=subject)
+        send_email_notification(to="lozanojohan321@gmail.com", message=body, subject=subject)
+        send_email_notification(to="florezanave@gmail.com", message=body, subject=subject)
+        send_email_notification(to="kevinskate.kg@gmail.com", message=body, subject=subject)
+
         logging.info(f"Correo de notificación de pago enviado a {to}")
         return f"Correo de notificación de pago enviado a {to}"
 
