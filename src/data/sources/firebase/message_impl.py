@@ -7,23 +7,37 @@ from firebase_admin.firestore import firestore
 from src.data.sources.firebase.utils import get_contact_ref
 
 class MessageFirebaseRepository(MessageRepository):
+    def get_contact_ref(seflf, ws_id, phone_number: str):
+        user_ref = db.collection("users").where("ws_id", "==", ws_id).limit(1).get()
+        if not user_ref:
+            print(
+                f"No se encontró ningún usuario al obtener contacto {phone_number} para {ws_id}"
+            )
+            return None
+        user_doc = user_ref[0].reference
+        # TODO: A veces separa a un contacto de otro debido al 57. Hacer que sean iguales.
+        contact_query = (
+            user_doc.collection("contacts")
+            .where("phone_number", "==", phone_number)
+            .limit(1)
+        )
+        contact_docs = contact_query.get()
+        if not contact_docs:
+            print(
+                f"No se encontró ningún contacto con el número {phone_number} para el usuario con ws_id {ws_id}"
+            )
+            print("Creando nuevo contacto...")
+            nuevo_contacto_ref = user_doc.collection("contacts").document()
+            nuevo_contacto_ref.set({"phone_number": phone_number})
+            return nuevo_contacto_ref
+
+        return contact_docs[0].reference, user_doc
     def create_message(self, user_id, phone_number, message, role, **kwargs):
         """Añade un mensaje a la conversación."""
         try:
-            contact_ref = get_contact_ref(user_id, phone_number)
-            if not contact_ref:
-                return
-
-            user_ref = db.collection("users").where("ws_id", "==", user_id).limit(1).get()
-            if not user_ref:
-                print(
-                    f"No se encontró ningún usuario al añadir mensaje para {phone_number} para {user_id}"
-                )
-                return
-            user_doc = user_ref[0].reference
-
-            message_ref = user_doc.collection("messages").document()
-            message_ref.set(
+            contact_ref, user_doc = self.get_contact_ref(user_id, phone_number)
+            # message_ref = user_doc.collection("messages").document()
+            user_doc.collection("messages").document().set(
                 {
                     "contact_ref": contact_ref,
                     "content": message,
@@ -33,12 +47,41 @@ class MessageFirebaseRepository(MessageRepository):
                     **kwargs,
                 }
             )
-            print(
-                f"Mensaje {'del usuario' if role else 'del bot'} añadido para el contacto {phone_number} del usuario con ws_id {user_id}"
-            )
         except Exception as e:
             print(f"Error al añadir mensaje para usuario {user_id}: {str(e)}")
             raise
+        
+        return
+        # try:
+        #     contact_ref = get_contact_ref(user_id, phone_number)
+        #     if not contact_ref:
+        #         return
+
+        #     user_ref = db.collection("users").where("ws_id", "==", user_id).limit(1).get()
+        #     if not user_ref:
+        #         print(
+        #             f"No se encontró ningún usuario al añadir mensaje para {phone_number} para {user_id}"
+        #         )
+        #         return
+        #     user_doc = user_ref[0].reference
+
+        #     message_ref = user_doc.collection("messages").document()
+        #     message_ref.set(
+        #         {
+        #             "contact_ref": contact_ref,
+        #             "content": message,
+        #             "role": role,
+        #             "platform": "whatsapp",
+        #             "timestamp": firestore.SERVER_TIMESTAMP,
+        #             **kwargs,
+        #         }
+        #     )
+        #     print(
+        #         f"Mensaje {'del usuario' if role else 'del bot'} añadido para el contacto {phone_number} del usuario con ws_id {user_id}"
+        #     )
+        # except Exception as e:
+        #     print(f"Error al añadir mensaje para usuario {user_id}: {str(e)}")
+        #     raise
 
     def get_message(self, user_id, phone_number, message, role, **kwargs):
         pass

@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import time
-from src.common.whatsapp.models.models import TemplateMessage, TextMessage
+from src.common.whatsapp.models.models import TemplateMessage, TextMessage, WhatsAppMessage
 from flask import jsonify, request
 import os
 import logging
@@ -127,13 +127,21 @@ def send_massive_message():
         if not template:
             msg = TextMessage(number=user, text=message)
         messages.append(msg)
+        
+    def send_msg(msg:WhatsAppMessage):
+        reslut = send_whatsapp_message(from_id, token, msg)
+        db_content = get_template_message_content(msg.template)
+        if not template:
+            db_content = msg.text
+        MessageFirebaseRepository().create_chat_message(from_id, msg.to_number, db_content)
+        return reslut
 
     batch_size = 20
     def send_message_batch(batch):
         results = []
         with ThreadPoolExecutor(max_workers=batch_size) as executor:
             results = list(executor.map(
-                lambda msg: send_whatsapp_message(from_id, token, msg),
+                lambda msg: send_msg(msg),
                 batch
             ))
         return results
@@ -173,4 +181,7 @@ def send_message():
 
 ## -------- TODO: ##
 def get_template_message_content(*args):
-    return "Hola, cómo estás? Quieres mejorar tu salud con los productos del Ganoderma o quieres saber más sobre nuestros productos?"
+    return """☕✨ ¡Feliz Año Nuevo! ✨☕
+
+    Si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, te damos un precio especial. 
+    La promo es hasta el 15 de enero. 🏃‍♀"""
