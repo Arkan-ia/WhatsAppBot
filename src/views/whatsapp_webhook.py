@@ -164,15 +164,14 @@ def send_message():
     token = body.get('token')
     message = body.get('message')
 
-    print(body)
-
     if not to_number or not from_id or not message:
         return jsonify({"status": "error", "message": "Faltan parámetros requeridos"}), 400
     
     message = TextMessage(number=to_number, text=message)
-    send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
-
-    MessageFirebaseRepository().create_chat_message(from_id, to_number, message.text)
+    call = send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+    
+    if call["status"] == "success":
+        MessageFirebaseRepository().create_chat_message(from_id, to_number, message.text)
     
     return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
 
