@@ -10,7 +10,6 @@ from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 from src.services.chat_service import ChatbotService
 
 
-
 class ConversationManager:
     def __init__(self, from_whatsapp_id: str, token: str, chatbot: ChatbotService):
         self.chatbot = chatbot
@@ -37,14 +36,19 @@ class ConversationManager:
             self.handle_message_type(message)
 
             response = self.chatbot.answer_conversation(
-                self.from_whatsapp_id, message["from"], get_whatsapp_message(message)
+                self.from_whatsapp_id, message["from"]
             )
 
             text_message = TextMessage(message["from"], response.content)
-            api_response = send_whatsapp_message(self.from_whatsapp_id, self.token, text_message)
+            api_response = send_whatsapp_message(
+                self.from_whatsapp_id, self.token, text_message
+            )
 
             self.message_repository.create_chat_message(
-                self.from_whatsapp_id, message["from"], response.content, message_id=api_response["body"]["messages"][0]["id"]
+                self.from_whatsapp_id,
+                message["from"],
+                response.content,
+                message_id=api_response["body"]["messages"][0]["id"],
             )
 
         except Exception as e:
@@ -62,28 +66,26 @@ class ConversationManager:
                 message=mark_read_data,
             )
 
-
     def handle_message_type(self, message):
         """Procesa el mensaje según su tipo y genera una respuesta"""
 
         if message["type"] == "image":
             image_url = get_media_from_id(message["image"]["id"], self.token)
             # TODO: Get text from message
-            question = "" # message[]
+            question = ""  # message[]
             response = self.chatbot.generate_answer_from_image(question, image_url)
 
         elif message["type"] == "audio":
             media_id = message["audio"]["id"]
             question = get_text_from_audio(media_id, self.token)
 
-        else: # Question is just text
+        else:  # Question is just text
             question = get_whatsapp_message(message)
             response = self.chatbot.answer_conversation(
-                self.from_whatsapp_id, message["from"], question
+                self.from_whatsapp_id, message["from"]
             )
 
         self.handle_tool_calls(response, message["from"])
-
 
     def execute_tool(self, tool_call, options, number):
         function_name = tool_call.function.name

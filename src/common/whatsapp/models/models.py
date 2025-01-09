@@ -23,14 +23,23 @@ class TemplateMessage(WhatsAppMessage):
         template_object = {
             "name": self.template,
             "language": {"code": self.code},
+            "components": [
+                {
+                    "type": "header",
+                    "parameters": [
+                        {
+                            "type": "image",
+                            "image": {
+                                "link": "https://firebasestorage.googleapis.com/v0/b/arcania-c4669.appspot.com/o/ganeexcel1.jpg?alt=media&token=8c3e0644-13b7-49fd-9f66-4c7b303a149e"
+                            },
+                        }
+                    ],
+                }
+            ],
         }
         if self.parameters:
             template_object["components"] = [
                 {"type": "body", "parameters": self.parameters},
-                {
-                    "type": "header",
-                    "parameters": [{"type": "image", "image": {"link": "https://ethic.es/wp-content/uploads/2023/03/imagen.jpg"}}],
-                },
             ]
         return json.dumps(
             {

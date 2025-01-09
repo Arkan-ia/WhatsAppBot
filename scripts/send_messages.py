@@ -16,7 +16,7 @@ def send(file_path, from_id, token, message, template=None, language_code="es"):
         print(f"Enviando mensaje a {number}")
         if template:
             ws_message = TemplateMessage(
-                to_number=str(number), template=template, code=language_code
+                to_number=str(number), template=template, code=language_code, parameters=True # Mirar si quitarlo
             )
             db_content = get_template_message_content(ws_message.template)
         else:

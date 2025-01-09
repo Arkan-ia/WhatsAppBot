@@ -22,7 +22,7 @@ class ChatbotService:
             user_data, messages, self.chatbot_model.tools
         )
     def generate_answer_from_text_with_vector_db(
-        self, user_data: Dict[str, Any], messages: list, tools, image
+        self, user_data: Dict[str, Any], messages: list, tools, image=None
     ):
         """Procesa mensajes de texto"""
         user_query = messages[-1]

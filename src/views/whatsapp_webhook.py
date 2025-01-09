@@ -119,7 +119,7 @@ def send_template_message():
             )
 
         message = TemplateMessage(
-            template=template, to_number=to_number, from_id=from_id
+            template=template, to_number=to_number, from_id=from_id, parameters=True
         )
         call = send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
 
@@ -259,10 +259,11 @@ def send_message():
 ## -------- TODO: ##
 def get_template_message_content(template):
     if template == "gano_excel_1":
-        return """¡Este año sí vas a cumplir las promesas de año nuevo! ¿Cierto? 🧐
+        return """
+        ¡Ey, es hora de quemar esos buñuelos y natilla! 🏃
 
-        Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
-        La promo es hasta el 15 de enero. 🛒"""
+        Año nuevo, vida nueva. 😎 Nada mejor que Café y Ganoderma, energía y salud en un mismo producto. ☕ Para iniciar este año con toda, llevas 2 o más cajas de nuestro café 3 en 1 o clásico, y llevas todo por un precio especial ¡Menos precio y más salud, una ganga! 🤑 
+        La promo es hasta el 15 de enero. 🔖"""
 
     elif template == "gano_excel_2":
         return """
