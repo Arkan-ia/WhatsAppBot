@@ -1,5 +1,4 @@
 from src.data.models.message import ChatMessage
-from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 from src.data.sources.firebase.utils import get_contact_ref
 from src.data.sources.firebase.config import db
 

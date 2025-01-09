@@ -6,6 +6,7 @@ class ChatMessage:
         self.tool_call_id = tool_call_id
         self.function_name = function_name
         self.function_response = function_response
+        #self.seen = False
 
     def to_dict(self):
         return {
@@ -16,3 +17,6 @@ class ChatMessage:
             "function_name": self.function_name,
             "function_response": self.function_response
         }
+    
+    def to_openai_dict(self):
+        return self.to_dict()

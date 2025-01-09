@@ -74,6 +74,7 @@ def send_whatsapp_message(
     
     try:
         data = message.create_message()
+        print("DATA:", data)
         response = requests.post(api_url, headers=headers, data=data)
         if response.status_code != 200:
             # TODO: Print only in productions

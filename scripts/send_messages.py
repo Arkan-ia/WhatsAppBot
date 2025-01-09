@@ -42,5 +42,5 @@ send(
     "450361964838178",
     "EAAPyxlZB9ZAvgBOzoE2FgHy1r4hewz7NAzeSRQhj52AWky2B5TgWucSFAL38NCoQy1OWUZCJHH3uqlwe3wMZC2PnZAqRit4EQ8TDYiidkyxcFot2y95W7XlLbNVE1dBNfRLs8exqUoTzk7cpGaC8QX6dkUFmQ5MILUG9v6KMTiFrZBltbCkJPI8iZCPZAqAx6aZBpBwZDZD",
     "que hizo rey",
-    "ano_nuevo",
+    "gano_excel_2",
 )

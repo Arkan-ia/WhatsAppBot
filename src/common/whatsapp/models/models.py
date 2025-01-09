@@ -26,17 +26,20 @@ class TemplateMessage(WhatsAppMessage):
         }
         if self.parameters:
             template_object["components"] = [
+                {"type": "body", "parameters": self.parameters},
                 {
-                    "type": "body",
-                    "parameters": self.parameters
-                }
+                    "type": "header",
+                    "parameters": [{"type": "image", "image": {"link": "https://ethic.es/wp-content/uploads/2023/03/imagen.jpg"}}],
+                },
             ]
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "to": self.to_number,
-            "type": "template",
-            "template": template_object,
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "to": self.to_number,
+                "type": "template",
+                "template": template_object,
+            }
+        )
 
 
 class TextMessage(WhatsAppMessage):
@@ -45,27 +48,32 @@ class TextMessage(WhatsAppMessage):
         self.text = text
 
     def create_message(self):
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.to_number,
-            "type": "text",
-            "text": {"body": self.text},
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": self.to_number,
+                "type": "text",
+                "text": {"body": self.text},
+            }
+        )
 
 
 class MarkReadMessage(WhatsAppMessage):
     # TODO: Implement
     to_number = ""
+
     def __init__(self, message_id: str):
         self.message_id = message_id
 
     def create_message(self) -> Dict[str, Any]:
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "status": "read",
-            "message_id": self.message_id,
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "status": "read",
+                "message_id": self.message_id,
+            }
+        )
 
 
 class ButtonReplyMessage(WhatsAppMessage):
@@ -91,18 +99,20 @@ class ButtonReplyMessage(WhatsAppMessage):
                 }
             )
 
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.to_number,
-            "type": "interactive",
-            "interactive": {
-                "type": "button",
-                "body": {"text": self.body},
-                "footer": {"text": self.footer},
-                "action": {"buttons": buttons},
-            },
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": self.to_number,
+                "type": "interactive",
+                "interactive": {
+                    "type": "button",
+                    "body": {"text": self.body},
+                    "footer": {"text": self.footer},
+                    "action": {"buttons": buttons},
+                },
+            }
+        )
 
 
 class ListReplyMessage(WhatsAppMessage):
@@ -126,21 +136,23 @@ class ListReplyMessage(WhatsAppMessage):
                 }
             )
 
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.to_number,
-            "type": "interactive",
-            "interactive": {
-                "type": "list",
-                "body": {"text": self.body},
-                "footer": {"text": self.footer},
-                "action": {
-                    "button": "Ver Opciones",
-                    "sections": [{"title": "Secciones", "rows": rows}],
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": self.to_number,
+                "type": "interactive",
+                "interactive": {
+                    "type": "list",
+                    "body": {"text": self.body},
+                    "footer": {"text": self.footer},
+                    "action": {
+                        "button": "Ver Opciones",
+                        "sections": [{"title": "Secciones", "rows": rows}],
+                    },
                 },
-            },
-        })
+            }
+        )
 
 
 class DocumentMessage(WhatsAppMessage):
@@ -151,17 +163,19 @@ class DocumentMessage(WhatsAppMessage):
         self.filename = filename
 
     def create_message(self) -> Dict[str, Any]:
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.to_number,
-            "type": "document",
-            "document": {
-                "link": self.url,
-                "caption": self.caption,
-                "filename": self.filename,
-            },
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": self.to_number,
+                "type": "document",
+                "document": {
+                    "link": self.url,
+                    "caption": self.caption,
+                    "filename": self.filename,
+                },
+            }
+        )
 
 
 class ReplyReactionMessage(WhatsAppMessage):
@@ -171,13 +185,15 @@ class ReplyReactionMessage(WhatsAppMessage):
         self.emoji = emoji
 
     def create_message(self) -> Dict[str, Any]:
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.to_number,
-            "type": "reaction",
-            "reaction": {"message_id": self.message_id, "emoji": self.emoji},
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": self.to_number,
+                "type": "reaction",
+                "reaction": {"message_id": self.message_id, "emoji": self.emoji},
+            }
+        )
 
 
 class ReplyTextMessage(WhatsAppMessage):
@@ -187,11 +203,13 @@ class ReplyTextMessage(WhatsAppMessage):
         self.text = text
 
     def create_message(self) -> Dict[str, Any]:
-        return json.dumps({
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.to_number,
-            "context": {"message_id": self.message_id},
-            "type": "text",
-            "text": {"body": self.text},
-        })
+        return json.dumps(
+            {
+                "messaging_product": "whatsapp",
+                "recipient_type": "individual",
+                "to": self.to_number,
+                "context": {"message_id": self.message_id},
+                "type": "text",
+                "text": {"body": self.text},
+            }
+        )

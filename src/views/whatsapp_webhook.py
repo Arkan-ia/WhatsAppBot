@@ -257,8 +257,29 @@ def send_message():
 
 
 ## -------- TODO: ##
-def get_template_message_content(*args):
-    return """☕✨ ¡Feliz Año Nuevo! ✨☕
+def get_template_message_content(template):
+    if template == "gano_excel_1":
+        return """¡Este año sí vas a cumplir las promesas de año nuevo! ¿Cierto? 🧐
 
-    Si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, te damos un precio especial. 
-    La promo es hasta el 15 de enero. 🏃‍♀"""
+        Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
+        La promo es hasta el 15 de enero. 🛒"""
+
+    elif template == "gano_excel_2":
+        return """
+        ¡Este año sí vas a cumplir las promesas de año nuevo! ¿Cierto? 🧐
+
+        Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
+        La promo es hasta el 15 de enero. 🛒"""
+    
+    elif template == "ano_nuevo":
+        return """☕✨ ¡Feliz Año Nuevo! ✨☕
+
+        Si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, te damos un precio especial. 
+        La promo es hasta el 15 de enero. 🏃‍♀"""
+
+    elif template == "hola":
+        return """Hola"""
+    
+    else:
+        raise Exception("No se encontró el contenido del template solicitado.")
+
