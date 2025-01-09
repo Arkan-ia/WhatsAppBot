@@ -23,12 +23,22 @@ def send(file_path, from_id, token, message, template=None, language_code="es"):
             ws_message = TextMessage(number=str(number), text=message)
             db_content = ws_message.text
 
-        send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=ws_message)
-        MessageFirebaseRepository().create_chat_message(from_id, str(number), db_content)
+        call = send_whatsapp_message(
+            from_whatsapp_id=from_id, token=token, message=ws_message
+        )
+
+        print(call)
+        
+        MessageFirebaseRepository().create_chat_message(
+            from_id,
+            str(number),
+            db_content,
+            message_id=call["body"]["messages"][0]["id"],
+        )
 
 
 send(
-    "scripts/jorge.xlsx",
+    "scripts/yo.xlsx",
     "450361964838178",
     "EAAPyxlZB9ZAvgBOzoE2FgHy1r4hewz7NAzeSRQhj52AWky2B5TgWucSFAL38NCoQy1OWUZCJHH3uqlwe3wMZC2PnZAqRit4EQ8TDYiidkyxcFot2y95W7XlLbNVE1dBNfRLs8exqUoTzk7cpGaC8QX6dkUFmQ5MILUG9v6KMTiFrZBltbCkJPI8iZCPZAqAx6aZBpBwZDZD",
     "que hizo rey",

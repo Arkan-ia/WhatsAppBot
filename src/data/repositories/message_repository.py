@@ -8,7 +8,7 @@ class MessageRepository(ABC):
         pass
 
     @abstractmethod
-    def get_message(self, user_id, phone_number, message, role, **kwargs):
+    def get_message(self, msj_id):
         pass
 
     @abstractmethod
@@ -23,12 +23,12 @@ class MessageRepository(ABC):
     def get_messages(self, user_id, phone_number) -> List:
         pass
 
-    def create_contact_message(self, ws_id, phone_number, message):
-        self.create_message(ws_id, phone_number, message, "user")
+    def create_contact_message(self, ws_id, phone_number, message, **kargs):
+        self.create_message(ws_id, phone_number, message, "user", **kargs)
 
-    def create_chat_message(self, ws_id, phone_number, message, tool_calls=None):
+    def create_chat_message(self, ws_id, phone_number, message, tool_calls=None, message_id=""):
         self.create_message(
-            ws_id, phone_number, message, "assistant", tool_calls=tool_calls
+            ws_id, phone_number, message, "assistant", tool_calls=tool_calls, message_id=message_id
         )
 
     def create_tool_message(
@@ -39,6 +39,7 @@ class MessageRepository(ABC):
         tool_call_id,
         function_name,
         function_response,
+        **kargs
     ):
 
         self.create_message(
@@ -49,6 +50,7 @@ class MessageRepository(ABC):
             tool_call_id=tool_call_id,
             name=function_name,
             content=function_response,
+            **kargs
         )
 
     @abstractmethod
