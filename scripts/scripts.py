@@ -71,11 +71,9 @@ def get_messages(user_id, phone_number):
         raise
 
 
-deleted_messages = delete_messages("450361964838178", "573142968931")
+deleted_messages = delete_messages("400692489794103", "573142968931")
 deleted_messages
 
-messages = get_messages("450361964838178", "573142968931")[
-    -10:
-]
+messages = get_messages("400692489794103", "573142968931")
 for message in messages:
     print(message)

@@ -105,6 +105,6 @@ def generate_answer(messages, tools):
             max_tokens=MAX_TOKENS,
             temperature=0.1,
         )
-        return response
+        return response.choices[0].message
     except Exception as e:
         raise Exception(f"Error al generar la respuesta: {e}")

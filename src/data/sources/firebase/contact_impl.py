@@ -17,11 +17,12 @@ class ContactFirebaseRepository(ContactRepository):
     def update_contact(self, ws_id, phone_number, data):
         """Actualiza los datos de un contacto."""
         try:
+            print(f"-------------DATA----------------- {data}")
             contact_ref = get_contact_ref(ws_id, phone_number)
             contact_ref.update(data)
-            logging.error(f"Datos de {phone_number} actualizados con {data}")
+            logging.info(f"Datos de {phone_number} actualizados con {data}")
         except Exception as e:
-            print(
+            logging.error(
                 f"Error al actualizar datos del contacto {phone_number} para {ws_id}: {str(e)}"
             )
             raise

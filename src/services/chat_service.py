@@ -21,6 +21,7 @@ class ChatbotService:
         return self.generate_answer_from_text_with_vector_db(
             user_data, messages, self.chatbot_model.tools
         )
+    
     def generate_answer_from_text_with_vector_db(
         self, user_data: Dict[str, Any], messages: list, tools, image=None
     ):

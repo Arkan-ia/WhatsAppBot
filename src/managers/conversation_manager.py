@@ -104,6 +104,7 @@ class ConversationManager:
 
     def handle_tool_calls(self, response, number):
         """Maneja y registra las llamadas a funciones"""
+        print("----- RESPONSE ------", response)
         if isinstance(response, str) or not response.tool_calls:
             return
 
