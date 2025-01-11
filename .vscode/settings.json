@@ -1,0 +1,16 @@
+{
+  "editor.formatOnSave": true,
+
+  // Configurar acciones al guardar: organizar importaciones con isort
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+
+  // Configuración específica para Python
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter", // Usa Black como formateador principal
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true, // Usa espacios en lugar de tabs
+    "editor.detectIndentation": false
+  }
+}

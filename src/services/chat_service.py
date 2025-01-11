@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Any
+from typing import Any, Dict
 
 from src.common.utils.openai_utils import add_context_to_chatbot, generate_answer
 from src.data.models.chatbot import ChatbotModel
@@ -14,7 +14,9 @@ class ChatbotService:
     def answer_conversation(self, from_whatsapp_id, to_number, question):
         messages = MessageFirebaseRepository().get_messages(from_whatsapp_id, to_number)
         user_data = ContactFirebaseRepository().get_contact(from_whatsapp_id, to_number)
-        return self.generate_answer_from_text_with_vector_db(question, user_data, messages, self.chatbot_model.tools)
+        return self.generate_answer_from_text_with_vector_db(
+            question, user_data, messages, self.chatbot_model.tools
+        )
 
     def generate_answer_from_text_with_vector_db(
         self, text: str, user_data: Dict[str, Any], messages, tools
