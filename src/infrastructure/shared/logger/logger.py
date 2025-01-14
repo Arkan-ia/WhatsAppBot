@@ -37,7 +37,6 @@ class LogAppManager(ABC):
         pass
 
 
-@singleton
 class ConsoleLogAppManager(LogAppManager):
     @inject
     def __init__(self):
@@ -48,7 +47,7 @@ class ConsoleLogAppManager(LogAppManager):
         logger.add(
             sys.stderr,
             format="<level>[{time:YYYY-MM-DD HH:mm:ss}] [{level}] <bold><blue>[{extra[caller]}]</blue></bold>  </level> <green>{message}</green>",
-            level=os.getenv("LOG_LEVEL", "INFO"),
+            level=os.getenv("LOG_LEVEL", "DEBUG"),
             colorize=True,
         )
 

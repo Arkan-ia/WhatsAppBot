@@ -2,6 +2,7 @@ from injector import inject
 
 from src.domain.chat.port.chat_repository import ChatRepository
 
+
 class ChatWithCostumerService:
   @inject
   def __init__(self, chat_repository: ChatRepository) -> None:

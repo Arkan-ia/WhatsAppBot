@@ -44,7 +44,7 @@ class RequestsHttpManager(HttpManager):
         self.__logger.set_max_json_length(400)
 
     def build_url(self, url: str) -> str:
-        return urljoin(self.__base_url, url)
+        return f"{self.__base_url.rstrip('/')}/{url.lstrip('/')}"
 
     def set_base_url(self, base_url: str) -> None:
         # determinate if last char is /
@@ -57,9 +57,14 @@ class RequestsHttpManager(HttpManager):
         try:
             response = requests.get(full_url, headers=self.__headers)
             response.raise_for_status()
-            return response.json()
+            return response
         except requests.RequestException as e:
-            self.__logger.error("Error in GET", full_url, e)
+            self.__logger.error(
+                "Error in GET",
+                f"[URL:{full_url}]",
+                f"[ERROR:{e}]",
+                f"[HEADERS:{self.__headers}]",
+            )
             raise e
 
     def post(self, url: str, body: Any, headers: dict = None) -> T:
@@ -68,9 +73,15 @@ class RequestsHttpManager(HttpManager):
             combined_headers = {**self.__headers, **(headers or {})}
             response = requests.post(full_url, json=body, headers=combined_headers)
             response.raise_for_status()
-            return response.json()
+            return response
         except requests.RequestException as e:
-            self.__logger.error("Error in POST", full_url, e)
+            self.__logger.error(
+                "Error in POST",
+                f"[URL:{full_url}]",
+                f"[ERROR:{e}]",
+                f"[HEADERS:{combined_headers}]",
+                f"[BODY:{body}]",
+            )
             raise e
 
     def set_token(self, token: str) -> None:

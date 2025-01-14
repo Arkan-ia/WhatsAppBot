@@ -1,39 +1,52 @@
-from abc import ABC, abstractmethod, ab
+from abc import ABC, abstractmethod
 
-from injector import inject
+from injector import Module, inject, singleton
+from requests import Response
 
+from src.domain.message.model.message import Message, Sender
 from src.infrastructure.shared.http.http_manager import HttpManager
-from src.infrastructure.shared.messaging.message import Message, Sender
+from src.infrastructure.shared.logger.logger import LogAppManager
 
 
 class MessagingManager(ABC):
-  @abstractmethod
-  def send_message(self, message: Message, sender: Sender) -> str:
-    pass
-  
+    @abstractmethod
+    def send_message(self, message: Message, sender: Sender) -> str:
+        pass
+
+
+@singleton
 class WhatsAppMessagingManager(MessagingManager):
-  @inject
-  def __init__(self, http_manager: HttpManager) -> None:
-    http_manager.set_base_url("https://graph.facebook.com/v21.0")
-    self.__http_manager = http_manager
-    
-  def send_message(self, message: Message, sender: Sender) -> str:
-    headers = {
-      "Content-Type": "application/json",
-      "Authorization": f"Bearer {sender.from_token}"
-    }
+    @inject
+    def __init__(self, http_manager: HttpManager, logger: LogAppManager) -> None:
+        http_manager.set_base_url("https://graph.facebook.com/v21.0")
+        self.__http_manager = http_manager
+        self.__logger = logger
+        self.__logger.set_caller("WhatsAppMessagingManager")
 
-    try:
-      response = self.__http_manager.post(
-        f"/{sender.from_identifier}/messages",
-        message.get_message(),
-        headers=headers
-      )
-      if response.statuscode != 200:
-        print(response.json())
-        raise Exception(f"Failed to send message. Status code: {response.statuscode}")
+    def send_message(self, message: Message, sender: Sender) -> str:
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {sender.from_token}",
+        }
 
-      return response
-    except Exception as e:
-      print(e)
-      raise e
+        try:
+            response: Response = self.__http_manager.post(
+                f"/{sender.from_identifier}/messages",
+                message.get_message(),
+                headers=headers,
+            )
+            self.__logger.debug("Got response from facebook", response.json())
+            if response.status_code != 200:
+                raise Exception(
+                    f"Failed to send message. Status code: {response.statuscode}"
+                )
+
+            return response
+        except Exception as e:
+            self.__logger.error(e)
+            raise e
+
+
+class MessagingManagerModule(Module):
+    def configure(self, binder):
+        binder.bind(MessagingManager, to=WhatsAppMessagingManager)
