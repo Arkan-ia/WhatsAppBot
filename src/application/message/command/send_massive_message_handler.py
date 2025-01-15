@@ -17,19 +17,4 @@ class HandlerSendMassiveMessage:
         self.__message_service = message_service
 
     def run(self, command: SendMessageCommand):
-        sender = WhatsAppSender()
-        sender.from_identifier = command["from_id"]
-        sender.from_token = command["token"]
-
-        message: Message = TextMessage(message=command["message"])
-        message.sender = sender
-        message.to = ""
-
-        if command["template"]:
-            message = TemplateMessage()
-            message.sender = sender
-            message.to = ""
-            message.template = command["template"]
-            message.code = command["language_code"]
-
-        return self.__message_service.run(message, command["file"])
+        return self.__message_service.run(command.get("file"), command)

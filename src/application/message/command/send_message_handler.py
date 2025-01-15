@@ -13,10 +13,10 @@ class HandlerSendMessage:
 
     def run(self, command: SendMessageCommand):
         sender = WhatsAppSender()
-        sender.from_identifier = command["from_id"]
-        sender.from_token = command["token"]
+        sender.from_identifier = command.get("from_id")
+        sender.from_token = command.get("token")
 
-        message = TextMessage(message=command["message"])
+        message = TextMessage(message=command.get("message"))
         message.sender = sender
-        message.to = command["to"]
+        message.to = command.get("to")
         return self.__message_service.run(message)

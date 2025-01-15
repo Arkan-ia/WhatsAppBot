@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict
 
 from flask import Blueprint, jsonify, request
@@ -36,6 +37,13 @@ def send_massive():
         "template": form["template"],
         "language_code": form["language_code"],
     }
+
+    if "parameters" in form:
+        try:
+            parameters_data = json.loads(request.form["parameters"])
+            form_data["parameters"] = parameters_data
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid JSON format for 'parameters'"}), 400
 
     command = SendMassiveMessageCommand().load(form_data)
     return handler_send_massive_message.run(command)

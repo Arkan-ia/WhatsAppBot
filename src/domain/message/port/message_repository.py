@@ -10,5 +10,5 @@ class MessageRepository(ABC):
         pass
 
     @abstractmethod
-    def send_group_message(self, message: List[Message]) -> str:
+    def send_massive_message(self, message: List[Message]) -> str:
         pass

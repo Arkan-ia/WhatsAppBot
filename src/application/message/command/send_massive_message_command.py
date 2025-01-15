@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from marshmallow import Schema, fields
 from pandas import ExcelFile
@@ -12,3 +12,6 @@ class SendMassiveMessageCommand(Schema):
     message: str = fields.Str(required=False)
     template: str = fields.Str(required=False)
     language_code: str = fields.Str(required=False)
+    parameters: List[Dict[str, Any]] = fields.List(
+        fields.Dict(keys=fields.Str(), values=fields.Raw()), required=False
+    )

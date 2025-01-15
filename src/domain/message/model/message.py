@@ -104,7 +104,6 @@ class TextMessage(Message[Dict[str, Any]]):
 
 
 class TemplateMessage(Message[Dict[str, Any]]):
-
     @property
     def to(self) -> str:
         return self.__to
@@ -137,10 +136,26 @@ class TemplateMessage(Message[Dict[str, Any]]):
     def code(self, code: str) -> None:
         self.__code = code
 
+    @property
+    def parameters(self) -> List[Dict[str, Any]]:
+        return self.__parameters
+
+    @parameters.setter
+    def parameters(self, parameters: List[Dict[str, Any]]) -> None:
+        self.__parameters = parameters
+
     def get_message(self) -> Dict[str, Any]:
+        template_object = {
+            "name": self.__template,
+            "language": {"code": self.__code},
+        }
+        if self.__parameters:
+            template_object["components"] = [
+                {"type": "header", "parameters": self.__parameters},
+            ]
         return {
             "messaging_product": "whatsapp",
             "to": self.__to,
             "type": "template",
-            "template": {"name": self.__template, "language": {"code": self.__code}},
+            "template": template_object,
         }
