@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+
 def init_db():
     try:
         cred = credentials.Certificate("src/data/sources/firebase/firebase.json")

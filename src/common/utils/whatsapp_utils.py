@@ -20,6 +20,11 @@ def is_valid_whatsapp_message(body):
     )
 
 
+def is_reaction_whatsapp_message(message):
+    logging.info("Readed reaction message")
+    return message["type"] == "reaction"
+
+
 def get_whatsapp_message(message: Dict) -> str:
     """
     Extract the text from an incoming WhatsApp message.
@@ -34,11 +39,9 @@ def get_whatsapp_message(message: Dict) -> str:
         return "mensaje no reconocido"
 
     message_type = message["type"]
+    
     if message_type == "text":
-        return message["text"]["body"]
-    elif message_type == "audio":
-        media_id = message["audio"]["id"]
-        return get_text_from_audio(media_id)
+        return message["text"]["body"]        
     elif message_type == "button":
         return message["button"]["text"]
     elif message_type == "interactive":
@@ -68,9 +71,16 @@ def send_whatsapp_message(
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}",
     }
-
-    data = message.create_message()
-    response = requests.post(api_url, headers=headers, data=data)
-
-    if response.status_code != 200:
-        logging.error(response.json())
+    
+    try:
+        data = message.create_message()
+        print("DATA:", data)
+        response = requests.post(api_url, headers=headers, data=data)
+        if response.status_code != 200:
+            # TODO: Print only in productions
+            logging.info(f"Status code: {response.status_code}.")
+            raise Exception(f"Failed to send message. Status code: {response.status_code}. Repsonse:{response.json()}")
+        return {"status": "success", "number": message.to_number, "body": response.json()}
+    except Exception as e:
+        logging.error(f"Error sending message: {str(e)}")
+        return {"status": "error", "number": message.to_number, "message": str(e), "body": response.json() }

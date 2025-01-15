@@ -2,16 +2,12 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-from src.common.utils.openai_utils import get_media_from_id
+from src.common.utils.openai_utils import get_media_from_id, get_text_from_audio
 from src.common.utils.whatsapp_utils import get_whatsapp_message, send_whatsapp_message
 from src.common.whatsapp.models.models import MarkReadMessage, TextMessage
 
-from openai import OpenAI
-
 from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 from src.services.chat_service import ChatbotService
-
-client = OpenAI()
 
 
 class ConversationManager:
@@ -29,25 +25,31 @@ class ConversationManager:
             message (Dict[str, Any]): El mensaje entrante con toda su información
         """
         try:
+            logging.error(f"Mensaje recivido {message}")
+
             self.message_repository.create_contact_message(
                 self.from_whatsapp_id,
                 message["from"],
                 get_whatsapp_message(message),
             )
             self.mark_read_message(message.get("id", None))
-
             self.handle_message_type(message)
 
             response = self.chatbot.answer_conversation(
-                self.from_whatsapp_id, message["from"], get_whatsapp_message(message)
+                self.from_whatsapp_id, message["from"]
+            )
+
+            text_message = TextMessage(message["from"], response.content)
+            api_response = send_whatsapp_message(
+                self.from_whatsapp_id, self.token, text_message
             )
 
             self.message_repository.create_chat_message(
-                self.from_whatsapp_id, message["from"], response
+                self.from_whatsapp_id,
+                message["from"],
+                response.content,
+                message_id=api_response["body"]["messages"][0]["id"],
             )
-
-            text_message = TextMessage(message["from"], response)
-            send_whatsapp_message(self.from_whatsapp_id, self.token, text_message)
 
         except Exception as e:
             logging.exception("Error al procesar mensaje entrante: %s", str(e))
@@ -68,43 +70,48 @@ class ConversationManager:
         """Procesa el mensaje según su tipo y genera una respuesta"""
 
         if message["type"] == "image":
-            image_url = get_media_from_id(message["image"]["id"])
-            response = self.chatbot.generate_answer_from_image("", image_url)
+            image_url = get_media_from_id(message["image"]["id"], self.token)
+            # TODO: Get text from message
+            question = ""  # message[]
+            response = self.chatbot.generate_answer_from_image(question, image_url)
 
-            return self.handle_tool_calls(response, message["from"])
+        elif message["type"] == "audio":
+            media_id = message["audio"]["id"]
+            question = get_text_from_audio(media_id, self.token)
 
-        else:
+        else:  # Question is just text
+            question = get_whatsapp_message(message)
             response = self.chatbot.answer_conversation(
-                self.from_whatsapp_id, message["from"], get_whatsapp_message(message)
+                self.from_whatsapp_id, message["from"]
             )
 
-            return self.handle_tool_calls(response, message["from"])
+        self.handle_tool_calls(response, message["from"])
 
-    def execute_tool(self, tool_call, options, number) -> str:
+    def execute_tool(self, tool_call, options, number):
         function_name = tool_call.function.name
         args = json.loads(tool_call.function.arguments)
-
+        logging.error(f"Argumens: {args}")
         response = options[function_name](args)
 
         self.message_repository.create_tool_message(
             self.from_whatsapp_id,
             number,
             response,
-            tool_call_id=tool_call.get("id"),
-            function_name=tool_call.get("function", {}).get("name"),
+            tool_call_id=tool_call.id,
+            function_name=tool_call.function.name,
             function_response=response,
         )
 
-        return response
-
     def handle_tool_calls(self, response, number):
         """Maneja y registra las llamadas a funciones"""
+        print("----- RESPONSE ------", response)
         if isinstance(response, str) or not response.tool_calls:
-            return response
+            return
 
         self.message_repository.store_tool_call_responses(
             from_id=self.from_whatsapp_id, response=response, number=number
         )
 
         for tool_call in response.tool_calls:
-            self.execute_tool(tool_call, self.tools, number)
+            logging.error(f"storing... {tool_call}")
+            self.execute_tool(tool_call, self.chatbot.chatbot_model.tool_calls, number)

@@ -38,8 +38,10 @@ def upload_audio_to_storage(audio_media_response, file_name):
 
 
 
-def get_contact_ref(ws_id, phone_number):
+def get_contact_ref(ws_id, phone_number: str):
     """Obtiene la referencia de un contacto."""
+    if len(phone_number) != 12: raise Exception("Los números a consultar deben tener su respectivo codigo de país")
+    
     try:
         user_ref = db.collection("users").where("ws_id", "==", ws_id).limit(1).get()
         if not user_ref:
@@ -48,6 +50,7 @@ def get_contact_ref(ws_id, phone_number):
             )
             return None
         user_doc = user_ref[0].reference
+        # TODO: A veces separa a un contacto de otro debido al 57. Hacer que sean iguales.
         contact_query = (
             user_doc.collection("contacts")
             .where("phone_number", "==", phone_number)
@@ -74,6 +77,7 @@ def get_contact_ref(ws_id, phone_number):
 
 
 def get_whatsapp_token(ws_id: str) -> str:
+    if ws_id == "400692489794103": return "EAAGgx3lKGfQBO0udrlIGAJ3vpBQz3Bo96z6eFcdcxZC8LchNMF1SiehmMceOBmoVZAlLV3AQBMis8AzRLQZAI5FwC7mzWaI7qtf9DdrkjrdTsQ8K5ACYhEQOPYzT8L0SoN3VD38X1UnwZAvxGtLU2Lna5CCpZBsqivSyaZCtwjkmtpq3ee9VOwr2hZCrJjpFVJR9gZDZD"
     try:
         user_ref = db.collection("users").where("ws_id", "==", ws_id).limit(1).get()
         if not user_ref:
@@ -81,7 +85,7 @@ def get_whatsapp_token(ws_id: str) -> str:
                 f"No se encontró ningún usuario al obtener token de WhatsApp para {ws_id}"
             )
             return
-        token = user_ref[0].get("whatsapp_token")
+        token = user_ref[0].get("ws_token")
         return token
 
     except Exception as e:

@@ -19,7 +19,7 @@ from src.data.sources.firebase.utils import (
 )
 
 
-def get_text_from_audio(media_id: str) -> str:
+def get_text_from_audio(media_id: str, token: str) -> str:
     """
     Convert an audio file to text using the OpenAI API.
 
@@ -30,7 +30,7 @@ def get_text_from_audio(media_id: str) -> str:
         str: The extracted text from the audio.
     """
 
-    audio_media_response = get_media_from_id(media_id)
+    audio_media_response = get_media_from_id(media_id, token)
 
     # Upload to firestore
     file_name = f"audios/{media_id}.ogg"
@@ -59,8 +59,13 @@ def transcribe_audio(file_path):
     return response
 
 
-def download_audio_in_local(url: str, headers) -> str:
+def download_audio_in_local(url: str, token) -> str:
     """Descargar el archivo de audio."""
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
     response = requests.get(url, headers=headers)
     response.raise_for_status()
 
@@ -72,7 +77,11 @@ def download_audio_in_local(url: str, headers) -> str:
     return file_path
 
 
-def get_media_from_id(id: str, headers):
+def get_media_from_id(id: str, token):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
     answer = requests.get(f"https://graph.facebook.com/v21.0/{id}/", headers=headers)
     if answer.status_code == 200:
         answer = answer.json()
@@ -88,13 +97,14 @@ def get_media_from_id(id: str, headers):
 
 def generate_answer(messages, tools):
     client = OpenAI()
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        tools=tools,
-        max_tokens=MAX_TOKENS,
-        temperature=0.1,
-    )
-
-    response = response.choices[0].message.content
-    return response
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=messages,
+            tools=tools,
+            max_tokens=MAX_TOKENS,
+            temperature=0.1,
+        )
+        return response.choices[0].message
+    except Exception as e:
+        raise Exception(f"Error al generar la respuesta: {e}")

@@ -3,39 +3,98 @@ import logging
 from typing import Any, Dict
 from src.common.utils.notifications import send_email_notification
 from src.data.sources.firebase.contact_impl import ContactFirebaseRepository
-
-
-
-
 def get_notify_payment_mail_tool():
     return {
         "type": "function",
         "function": {
             "name": "notify_payment_mail",
             "description": "Envía un correo electrónico al dueño del negocio notificando que un cliente quiere pagar.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "products": {
+                        "type": "string",
+                        "description": "Los productos realizados por el cliente.",
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "El precio total del pedido.",
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "description": "El número de teléfono del cliente.",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "El nombre del cliente.",
+                    },
+                    "cedula": {
+                        "type": "string",
+                        "description": "La cédula del cliente.",
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "La dirección del cliente.",
+                    },
+                    "city": {
+                        "type": "string",
+                        "description": "La ciudad del cliente.",
+                    },
+                },
+                "required": ["products", "price", "cedula", "address", "city"],
+            },
         },
     }
 
 
-def notify_payment_mail(to: str):
+def notify_payment_mail(
+    to: str,
+    products: str,
+    price: float,
+    phone_number: str = None,
+    name: str = None,
+    cedula: str = None,
+    address: str = None,
+    city: str = None,
+):
     """
     Envía un correo electrónico notificando un pago.
-    
+
     Args:
         to (str): Dirección de correo del destinatario
-        
+        pedido_realizado (str): El pedido realizado por el cliente
+        monto_total (float): El monto total del pedido
+        phone_number (str, optional): El número de teléfono del cliente.
+        name (str, optional): El nombre del cliente.
+        cedula (str, optional): La cédula del cliente.
+        address (str, optional): La dirección del cliente.
+        city (str, optional): La ciudad del cliente.
+
     Returns:
         None
     """
     try:
         subject = "Nueva solicitud de pago"
-        body = "Un cliente ha solicitado realizar un pago. Por favor revisa tu panel de control."
-        
+        body = f"Un cliente ha solicitado realizar un pago. Los detalles del cliente son:\n- Precio: {price}\n- Productos: {products}\n- Nombre: {name}\n- Número de teléfono: {phone_number}\n- Cédula: {cedula}\n- Dirección: {address}\n- Ciudad: {city}.\n Por favor revisa tu panel de control en https://arkania.flutterflow.app/chats"
+
         send_email_notification(to=to, message=body, subject=subject)
+        send_email_notification(
+            to="lozanojohan321@gmail.com", message=body, subject=subject
+        )
+        send_email_notification(
+            to="florezanave@gmail.com", message=body, subject=subject
+        )
+        send_email_notification(
+            to="kevinskate.kg@gmail.com", message=body, subject=subject
+        )
+
         logging.info(f"Correo de notificación de pago enviado a {to}")
+        return f"Correo de notificación de pago enviado a {to}"
+
     except Exception as e:
-        logging.error(f"Error al enviar correo de notificación de pago a {to}: {str(e)}")
-        
+        logging.error(
+            f"Error al enviar correo de notificación de pago a {to}: {str(e)}"
+        )
 
 
 def get_notify_payment_push_notification_tool():
@@ -68,14 +127,13 @@ def get_send_menu_pdf_tool():
     }
 
 
-
 # def send_menu_pdf(menu_path: str, number: str):
 #     """
 #     Envía el menú del negocio en formato PDF.
-    
+
 #     Args:
 #         menu_path (str): La ruta del menú en formato PDF
-        
+
 #     Returns:
 #         None
 #     """
@@ -90,6 +148,7 @@ def get_send_menu_pdf_tool():
 #     except Exception as e:
 #             logging.exception("Error al enviar el PDF del menú: %s", str(e))
 #             raise
+
 
 def get_store_user_data_tool(data: Dict[str, Any] = None):
     return {
@@ -135,7 +194,7 @@ No es necesario que el usuario proporcione todos los campos; envía solo los cam
                     },
                     "phone_number": {
                         "type": "string",
-                        "description": "El número de teléfono del usuario. Extráelo cuando el usuario lo mencione.",
+                        "description": "El número de teléfono del usuario, debe iniciar con el código del país sin el '+'. Por defecto es 57.",
                     },
                 },
                 "required": ["phone_number"],
@@ -143,16 +202,17 @@ No es necesario que el usuario proporcione todos los campos; envía solo los cam
         },
     }
 
-def store_user_data(ws_id: str, phone_number: str, data: Dict[str, Any]):
+
+def store_user_data(ws_id: str, phone_number: str, data: Dict[str, Any] = None):
     """
     Almacena los datos del usuario en la base de datos.
-    
+
     Args:
         kwargs (dict): Los datos del usuario
-        
+
     Returns:
         None
     """
     ContactFirebaseRepository().update_contact(ws_id, phone_number, data)
 
-
+    return "Usuario actualizado"

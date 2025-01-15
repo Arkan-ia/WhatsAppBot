@@ -1,5 +1,8 @@
 from dotenv import load_dotenv
 
+from src.common.utils.notifications import send_email_notification
+from src.views.whatsapp_webhook import *
+
 load_dotenv()
 from flask import Flask, Request, jsonify
 from flask_cors import CORS

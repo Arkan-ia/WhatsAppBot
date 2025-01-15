@@ -90,7 +90,7 @@ class ChatbotModel:
             "2. Pide al usuario que te diga qué producto o servicio está buscando"
             "3. Si el usuario te pregunta por un producto o servicio que no ofrecemos, redirige la conversación a los productos o servicios que ofrecemos y di su precio"
             "4. Si el usuario te pregunta por producto/s o servicio/s que ofrecemos, ofrece una solución personalizada para él"
-            "5. Si el usuario ya sabe qué producto o servicio está buscando, pregunta los siguientes datos: nombre, teléfono, número de documento, correo electrónico, y dirección"
+            "5. Si el usuario ya sabe qué producto o servicio está buscando, pregunta los siguientes datos: nombre, teléfono, número de documento, correo electrónico, dirección y ciudad"
             "6. Di el monto total de la compra"
             "7. Pide al usuario esperar unos minutos para iniciar el proceso de compra"
             f""" 
