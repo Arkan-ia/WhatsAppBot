@@ -79,19 +79,19 @@ class TextMessage(Message[Dict[str, Any]]):
 
     @property
     def to(self) -> str:
-        return self._to
+        return self.__to
 
     @to.setter
     def to(self, to: str) -> None:
-        self._to = to
+        self.__to = to
 
     @property
     def sender(self) -> WhatsAppSender:
-        return self._sender
+        return self.__sender
 
     @sender.setter
     def sender(self, sender: WhatsAppSender) -> None:
-        self._sender = sender
+        self.__sender = sender
 
     def get_message(self) -> Dict[str, Any]:
         return {
@@ -100,4 +100,47 @@ class TextMessage(Message[Dict[str, Any]]):
             "to": self.to,
             "type": "text",
             "text": {"body": self._message},
+        }
+
+
+class TemplateMessage(Message[Dict[str, Any]]):
+
+    @property
+    def to(self) -> str:
+        return self.__to
+
+    @to.setter
+    def to(self, to: str) -> None:
+        self.__to = to
+
+    @property
+    def sender(self) -> WhatsAppSender:
+        return self.__sender
+
+    @sender.setter
+    def sender(self, sender: WhatsAppSender) -> None:
+        self.__sender = sender
+
+    @property
+    def template(self) -> str:
+        return self.__template
+
+    @template.setter
+    def template(self, template: str) -> None:
+        self.__template = template
+
+    @property
+    def code(self) -> str:
+        return self.__code
+
+    @code.setter
+    def code(self, code: str) -> None:
+        self.__code = code
+
+    def get_message(self) -> Dict[str, Any]:
+        return {
+            "messaging_product": "whatsapp",
+            "to": self.__to,
+            "type": "template",
+            "template": {"name": self.__template, "language": {"code": self.__code}},
         }

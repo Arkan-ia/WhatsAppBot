@@ -1,7 +1,11 @@
 from injector import Injector
 
+from src.application.message.command.send_massive_message_handler import (
+    HandlerSendMassiveMessage,
+)
 from src.application.message.command.send_message_handler import HandlerSendMessage
 from src.domain.chat.service.chat_with_costumer import ChatWithCostumerService
+from src.domain.message.service.send_massive import SendMassiveMesageService
 from src.domain.message.service.send_single import SendSingleMesageService
 from src.infrastructure.chat.adapter.module import ChatModule
 from src.infrastructure.message.adapter.message_adapter import MessageModule
@@ -19,11 +23,18 @@ chatbot_service: ChatWithCostumerService = injector.get(ChatWithCostumerService)
 send_single_message_service: SendSingleMesageService = injector.get(
     SendSingleMesageService
 )
+send_massive_message_service: SendMassiveMesageService = injector.get(
+    SendMassiveMesageService
+)
 
 # Handlers
 handler_send_message: HandlerSendMessage = HandlerSendMessage(
     send_single_message_service
 )
+handler_send_massive_message: HandlerSendMassiveMessage = HandlerSendMassiveMessage(
+    send_massive_message_service
+)
+
 
 # Shared deps and singletons
 http_manager: HttpManager = injector.get(HttpManager)
