@@ -15,13 +15,8 @@ def main(request: Request):
     Esta función maneja todas las solicitudes HTTP entrantes.
     """
 
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-    }
     if request.method == 'OPTIONS':
-        return ('', 204, headers)
+        return ('', 204, CORS_HEADERS)
 
     with app.app_context():
         if request.path == '/' and request.method == 'GET':
@@ -30,17 +25,17 @@ def main(request: Request):
         elif request.path == '/' and request.method == 'POST':
             return process_message()
 
-        elif request.path == '/send-template' and request.method == 'POST':
-            return send_template_message()
-
-        elif request.path == '/send-message' and request.method == 'POST':
-            return send_message()
-        
         elif request.path == '/send-email' and request.method == 'GET':
             return send_email_notification("kevinskate.kg@gmail.com", "Cuerpo del email", "Prueba")
         
         elif request.path == '/ping' and request.method == 'GET':
             return jsonify({"message": "pong"}), 200
+
+        elif request.path == '/send-message' and request.method == 'POST':
+            return send_message()
+        
+        elif request.path == '/send-template' and request.method == 'POST':
+            return send_template_message()
         
         elif request.path == '/send-message/massive' and request.method == 'POST':
             return send_massive_message()

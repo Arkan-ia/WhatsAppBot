@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import time
+from src.common.config import CORS_HEADERS
 from src.common.whatsapp.models.models import (
     TemplateMessage,
     TextMessage,
@@ -136,6 +137,7 @@ def send_template_message():
                 }
             ),
             200,
+            CORS_HEADERS
         )
     except Exception as e:
         logging.error(f"Error al iniciar la conversación: {str(e)}")
@@ -222,6 +224,7 @@ def send_massive_message():
             }
         ),
         200,
+        CORS_HEADERS
     )
 
 
@@ -248,7 +251,7 @@ def send_message():
                 from_id, to_number, message.text, message_id=call["body"]["messages"][0]["id"]
             )
 
-        return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
+        return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200, CORS_HEADERS
 
     except Exception as e:
         logging.error(e)
