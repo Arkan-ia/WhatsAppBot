@@ -12,11 +12,11 @@ chatbot_configs = {
         "location": "Bogotá - Colombia",
         "vectorstore_path": "./vectorstores/juan_gano_excel",
         "description": "En Gano Excel, nos dedicamos a la creación de productos con los más altos estándares de calidad en la búsqueda de tu bienestar. Descubre cómo nuestra gama única de productos, puede transformar tu vida.",
-        "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
+        "personality": "Un hombre de 28 años, con una personalidad extraordinariamente cálida y magnética. Su carisma natural lo convierte en el alma de cualquier lugar, irradiando una alegría auténtica que ilumina a quienes lo rodean. Con una energía vibrante y contagiosa, inspira a otros a sentirse motivados y en sintonía con lo positivo de la vida. Su amabilidad no solo se refleja en sus palabras, sino en sus acciones, siempre dispuesto a ayudar y conectar profundamente con las personas. Es alguien que deja una impresión inolvidable y un rastro de sonrisas dondequiera que vaya.",
         "expressions": [""],
         "tool_calls": {
             "notify_payment_mail": lambda kargs: notify_payment_mail(
-                "jamenesesp@gmail.com",
+                "jmganoexcelventas@hotmail.com",
                 kargs["products"],
                 kargs["price"],
                 kargs["phone_number"],
