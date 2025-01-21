@@ -33,21 +33,30 @@ class SendMassiveMesageService:
         sender.from_token = metadata.get("token")
 
         messages: List[Message] = []
+        template_data = ""
         for user in users:
             if not user.isdigit():
                 continue
 
-            msg: Message = TextMessage(message)
+            msg: Message = TextMessage()
             msg.sender = sender
             msg.to = user
+            msg.content = message
 
             if template:
+                if len(template_data) == 0:
+                    # TODO: remove log
+                    print("called get template data")
+                    template_data = self.__message_repository.get_template_data(
+                        metadata.get("from_id"), template
+                    )
                 msg: Message = TemplateMessage()
                 msg.sender = sender
                 msg.to = user
                 msg.template = template
                 msg.code = language_code
                 msg.parameters = parameters
+                msg.content = template_data
 
             messages.append(msg)
 

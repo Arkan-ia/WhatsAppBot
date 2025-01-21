@@ -12,10 +12,20 @@ from src.infrastructure.message.adapter.message_adapter import MessageModule
 from src.infrastructure.shared.http.http_manager import HttpManager, HttpModule
 from src.infrastructure.shared.logger.logger import LoggerModule
 from src.infrastructure.shared.messaging.mesaging_manager import MessagingManagerModule
+from src.infrastructure.shared.storage.no_relational_db_manager import (
+    NoRelationalDBModule,
+)
 from src.services.chat_service import ChatbotService
 
 injector = Injector(
-    [ChatModule, HttpModule, LoggerModule, MessageModule, MessagingManagerModule]
+    [
+        ChatModule,
+        HttpModule,
+        LoggerModule,
+        MessageModule,
+        MessagingManagerModule,
+        NoRelationalDBModule,
+    ]
 )
 
 # Services

@@ -42,6 +42,16 @@ class Message(ABC, Generic[T]):
 
     @property
     @abstractmethod
+    def content(self) -> str:
+        pass
+
+    @content.setter
+    @abstractmethod
+    def content(self, content: str) -> None:
+        pass
+
+    @property
+    @abstractmethod
     def sender(self) -> Sender:
         pass
 
@@ -74,8 +84,8 @@ class WhatsAppSender(Sender):
 
 
 class TextMessage(Message[Dict[str, Any]]):
-    def __init__(self, message: str) -> None:
-        self._message = message
+    def __init__(self) -> None:
+        return
 
     @property
     def to(self) -> str:
@@ -93,13 +103,21 @@ class TextMessage(Message[Dict[str, Any]]):
     def sender(self, sender: WhatsAppSender) -> None:
         self.__sender = sender
 
+    @property
+    def content(self) -> str:
+        return self.__content
+
+    @content.setter
+    def content(self, content: str) -> None:
+        self.__content = content
+
     def get_message(self) -> Dict[str, Any]:
         return {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
             "to": self.to,
             "type": "text",
-            "text": {"body": self._message},
+            "text": {"body": self.__content},
         }
 
 
@@ -143,6 +161,14 @@ class TemplateMessage(Message[Dict[str, Any]]):
     @parameters.setter
     def parameters(self, parameters: List[Dict[str, Any]]) -> None:
         self.__parameters = parameters
+
+    @property
+    def content(self) -> str:
+        return self.__content
+
+    @content.setter
+    def content(self, content: str) -> None:
+        self.__content = content
 
     def get_message(self) -> Dict[str, Any]:
         template_object = {

@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import time
-from typing import List
+from typing import List, Literal
 
 from flask import jsonify
 from injector import Module, inject, singleton
@@ -9,6 +9,13 @@ from src.domain.message.model.message import Message, Sender
 from src.domain.message.port.message_repository import MessageRepository
 from src.infrastructure.shared.logger.logger import LogAppManager
 from src.infrastructure.shared.messaging.mesaging_manager import MessagingManager
+from src.infrastructure.shared.storage.no_relational_db_manager import (
+    NoRealtionalDBManager,
+)
+from google.cloud.firestore_v1.query_results import QueryResultsList
+from google.cloud.firestore_v1.base_document import DocumentSnapshot
+from google.cloud.firestore_v1.collection import CollectionReference
+from google.cloud.firestore_v1.document import DocumentReference
 
 
 @singleton
@@ -18,17 +25,77 @@ class MessageWhatsAppApiAdapter(MessageRepository):
 
     @inject
     def __init__(
-        self, messaging_manager: MessagingManager, logger: LogAppManager
+        self,
+        messaging_manager: MessagingManager,
+        logger: LogAppManager,
+        no_rel_db: NoRealtionalDBManager,
     ) -> None:
         self.__messaging_manager = messaging_manager
         self.__logger = logger
         self.__logger.set_caller("MessageWhatsAppApiAdapter")
+        self.__storage = no_rel_db
+
+    def __validate_to(self, phone_number):
+        if len(phone_number) != 12:
+            raise ValueError(
+                "The number must include the country code and have 12 digits."
+            )
+
+    # TODO: implement getting from db
+    def get_template_data(self, business_id: str, template_name: str) -> str:
+        return "template data"
+
+    def save_message(
+        self,
+        message: Message,
+        role: Literal["user", "assistant"],
+        platform: Literal["whatsapp"],
+    ) -> str:
+        business_ref: CollectionReference = (
+            self.__storage.getRawCollection("users")
+            .where("ws_id", "==", message.sender.from_identifier)
+            .limit(1)
+            .get()
+        )
+        if not business_ref:
+            raise Exception(f"Business with ref {message.to} was not found")
+
+        business_doc = business_ref[0].reference
+
+        contact_ref: DocumentReference = business_doc.collection("contacts").document(
+            message.to
+        )
+        doest_exist_contact = not contact_ref.get().exists
+        if doest_exist_contact:
+            self.__logger.info(
+                f"Creating new contact {message.to} in business {message.sender.from_identifier}"
+            )
+            contact_ref.set({"ws_id": message.to})
+
+        if not business_ref or not contact_ref:
+            self.__logger.error(
+                f"Unable to save message {message.content} with business_id {message.sender.from_identifier} to contact {message.to}"
+            )
+            return
+
+        message_ref: DocumentReference = business_doc.collection("messages").document()
+        message_ref.set(
+            {
+                "content": message.content,
+                "platform": platform,
+                "timestamp": self.__storage.getServerTimestamp(),
+                "role": role,
+                "contact_ref": contact_ref,
+            }
+        )
 
     def send_single_message(self, message: Message) -> str:
         try:
+            self.__validate_to(message.to)
             sender = message.sender
             self.__messaging_manager.send_message(message, sender)
-            # TODO: Save into db
+            self.save_message(message, "assistant", "whatsapp")
+
             return {
                 "status": "success",
                 "message": f"Message sent to {message.to} from {sender.from_identifier}",
@@ -41,7 +108,6 @@ class MessageWhatsAppApiAdapter(MessageRepository):
             }
 
     def send_massive_message(self, messages: List[Message]) -> str:
-        print(messages)
         all_results = []
         for batch in self.__batchify(messages, self.__batch_size):
             batch_results = self.__send_message_batch(batch)
