@@ -85,6 +85,7 @@ CORS(app)
 
 # app.register_blueprint(chat_bp)
 app.register_blueprint(message_bp)
+app.get("/ping")(lambda: "pong")
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8080)

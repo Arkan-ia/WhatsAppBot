@@ -16,7 +16,8 @@ class HandlerSendMessage:
         sender.from_identifier = command.get("from_id")
         sender.from_token = command.get("token")
 
-        message = TextMessage(message=command.get("message"))
+        message = TextMessage()
+        message.content = command.get("message")
         message.sender = sender
         message.to = command.get("to")
         return self.__message_service.run(message)

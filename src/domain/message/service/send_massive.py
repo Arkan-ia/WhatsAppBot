@@ -45,8 +45,7 @@ class SendMassiveMesageService:
 
             if template:
                 if len(template_data) == 0:
-                    # TODO: remove log
-                    print("called get template data")
+                    # TODO: Apply and test raise exceptio when a template doesnt exists
                     template_data = self.__message_repository.get_template_data(
                         metadata.get("from_id"), template
                     )

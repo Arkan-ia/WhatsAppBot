@@ -31,7 +31,6 @@ def send_massive():
     form_data: Dict[str, Any] = {
         "token": form["token"],
         "message": form["message"],
-        "from_id": form["from_id"],
         "file": file,
         "from_id": form["from_id"],
         "template": form["template"],

@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import List, Literal
+from unittest.mock import MagicMock
 
 from flask import jsonify
 from injector import Module, inject, singleton
@@ -16,6 +17,8 @@ from google.cloud.firestore_v1.query_results import QueryResultsList
 from google.cloud.firestore_v1.base_document import DocumentSnapshot
 from google.cloud.firestore_v1.collection import CollectionReference
 from google.cloud.firestore_v1.document import DocumentReference
+
+from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
 
 
 @singleton
@@ -139,6 +142,14 @@ class MessageWhatsAppApiAdapter(MessageRepository):
         return results
 
 
+MessageRepositoryMock = MagicMock()
+
+
 class MessageModule(Module):
+    @flexible_bind_wrapper(
+        mock=MessageRepositoryMock,
+        interface=MessageRepository,
+        to=MessageWhatsAppApiAdapter,
+    )
     def configure(self, binder):
-        binder.bind(MessageRepository, to=MessageWhatsAppApiAdapter)
+        return
