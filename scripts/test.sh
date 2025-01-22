@@ -1,0 +1,1 @@
+ward --tags "unit or e2e or integration"

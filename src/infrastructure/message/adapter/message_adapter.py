@@ -43,6 +43,7 @@ class MessageWhatsAppApiAdapter(MessageRepository):
 
     # TODO: implement getting from db
     def get_template_data(self, business_id: str, template_name: str) -> str:
+        # TODO: get from db
         return "template data"
 
     def save_message(
@@ -61,22 +62,20 @@ class MessageWhatsAppApiAdapter(MessageRepository):
             raise Exception(f"Business with ref {message.to} was not found")
 
         business_doc = business_ref[0].reference
-
         contact_ref: DocumentReference = business_doc.collection("contacts").document(
             message.to
         )
+        if not contact_ref:
+            raise Exception(
+                f"Contact with ref {message.to} was not found in business {message.sender.from_identifier}"
+            )
+
         doest_exist_contact = not contact_ref.get().exists
         if doest_exist_contact:
             self.__logger.info(
                 f"Creating new contact {message.to} in business {message.sender.from_identifier}"
             )
             contact_ref.set({"ws_id": message.to})
-
-        if not business_ref or not contact_ref:
-            self.__logger.error(
-                f"Unable to save message {message.content} with business_id {message.sender.from_identifier} to contact {message.to}"
-            )
-            return
 
         message_ref: DocumentReference = business_doc.collection("messages").document()
         message_ref.set(
@@ -90,9 +89,9 @@ class MessageWhatsAppApiAdapter(MessageRepository):
         )
 
     def send_single_message(self, message: Message) -> str:
+        sender = message.sender
         try:
             self.__validate_to(message.to)
-            sender = message.sender
             self.__messaging_manager.send_message(message, sender)
             self.save_message(message, "assistant", "whatsapp")
 
