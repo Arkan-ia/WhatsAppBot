@@ -120,13 +120,12 @@ class MessageWhatsAppApiAdapter(MessageRepository):
             1 for result in all_results if result["status"] == "success"
         )
         error_requests = len(messages) - success_requests
-        return jsonify(
-            {
-                "status": "ok",
-                "message": f"Mensajes enviados con éxito a {success_requests} usuarios, {error_requests} errores",
-                "details": all_results,
-            }
-        )
+
+        return {
+            "status": "ok",
+            "message": f"Mensajes enviados con éxito a {success_requests} usuarios, {error_requests} errores",
+            "details": all_results,
+        }
 
     def __batchify(self, iterable: iter, batch_size: int) -> iter:
         """Split an interable into batches of batch_size."""

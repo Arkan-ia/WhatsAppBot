@@ -1,1 +1,1 @@
-ward --tags "unit or e2e or integration"
+PYTHON_ENV=test ward --tags "e2e or unit"

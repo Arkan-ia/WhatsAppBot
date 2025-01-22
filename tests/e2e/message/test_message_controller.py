@@ -151,6 +151,29 @@ def _(client, mock_massive_body):
     form = mock_massive_body.copy()
     form["file"] = (excel_file, "test.xlsx")
 
+    expected_details = [
+        {
+            "message": f"Error sending message to 1 from Business 123456789012",
+            "status": "error",
+        },
+        {
+            "message": f"Message sent to 2 from Business 123456789012",
+            "status": "success",
+        },
+        {
+            "message": f"Message sent to 3 from Business 123456789012",
+            "status": "success",
+        },
+        {
+            "message": f"Message sent to 4 from Business 123456789012",
+            "status": "success",
+        },
+        {
+            "message": f"Message sent to 5 from Business 123456789012",
+            "status": "success",
+        },
+    ]
+
     # Mocks
     MessageRepositoryMock.get_template_data.return_value = "template data"
     MessageRepositoryMock.send_massive_message.return_value = {
@@ -192,30 +215,7 @@ def _(client, mock_massive_body):
         response.json["message"]
         == "Mensajes enviados con éxito a 5 usuarios, 0 errores"
     )
-    assert (
-        response.json["details"][0]["message"]
-        == f"Error sending message to 1 from Business 123456789012"
-    )
-    assert response.json["details"][0]["status"] == "error"
-    assert (
-        response.json["details"][1]["message"]
-        == f"Message sent to 2 from Business 123456789012"
-    )
-    assert response.json["details"][1]["status"] == "success"
-    assert (
-        response.json["details"][2]["message"]
-        == f"Message sent to 3 from Business 123456789012"
-    )
-    assert response.json["details"][2]["status"] == "success"
-    assert (
-        response.json["details"][3]["message"]
-        == f"Message sent to 4 from Business 123456789012"
-    )
-    assert response.json["details"][3]["status"] == "success"
-    assert (
-        response.json["details"][4]["message"]
-        == f"Message sent to 5 from Business 123456789012"
-    )
+    assert response.json["details"] == expected_details
 
 
 @test(
@@ -227,6 +227,28 @@ def _(client, mock_massive_body):
     # Arrange
     data = {"userid": [1, 2, 3, 4, 5]}
     df = pd.DataFrame(data)
+    expected_details = [
+        {
+            "message": f"Error sending message to 1 from Business 123456789012",
+            "status": "error",
+        },
+        {
+            "message": f"Message sent to 2 from Business 123456789012",
+            "status": "success",
+        },
+        {
+            "message": f"Message sent to 3 from Business 123456789012",
+            "status": "success",
+        },
+        {
+            "message": f"Message sent to 4 from Business 123456789012",
+            "status": "success",
+        },
+        {
+            "message": f"Message sent to 5 from Business 123456789012",
+            "status": "success",
+        },
+    ]
 
     excel_file = io.BytesIO()
     df.to_excel(excel_file, index=False)
@@ -276,27 +298,4 @@ def _(client, mock_massive_body):
         response.json["message"]
         == "Mensajes enviados con éxito a 5 usuarios, 0 errores"
     )
-    assert (
-        response.json["details"][0]["message"]
-        == f"Error sending message to 1 from Business 123456789012"
-    )
-    assert response.json["details"][0]["status"] == "error"
-    assert (
-        response.json["details"][1]["message"]
-        == f"Message sent to 2 from Business 123456789012"
-    )
-    assert response.json["details"][1]["status"] == "success"
-    assert (
-        response.json["details"][2]["message"]
-        == f"Message sent to 3 from Business 123456789012"
-    )
-    assert response.json["details"][2]["status"] == "success"
-    assert (
-        response.json["details"][3]["message"]
-        == f"Message sent to 4 from Business 123456789012"
-    )
-    assert response.json["details"][3]["status"] == "success"
-    assert (
-        response.json["details"][4]["message"]
-        == f"Message sent to 5 from Business 123456789012"
-    )
+    assert response.json["details"] == expected_details

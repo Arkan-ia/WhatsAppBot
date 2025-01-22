@@ -1,5 +1,5 @@
-from ward import skip, test, fixture, using
-from unittest.mock import MagicMock, PropertyMock
+from ward import test, fixture, using
+from unittest.mock import MagicMock, patch
 from src.domain.message.model.message import (
     Message,
     Sender,
@@ -43,7 +43,10 @@ def message_adapter(mock_dependencies):
     )
 
 
-@test("send_single_message should send a valid message successfully", tags=common_tags)
+@test(
+    "send_single_message should send a valid message successfully",
+    tags=common_tags + ["send_single_message"],
+)
 @using(message_adapter=message_adapter, common_message=common_message)
 def _(message_adapter, common_message):
     # Arrange
@@ -66,7 +69,8 @@ def _(message_adapter, common_message):
 
 
 @test(
-    "send_single_message should return an error for invalid recipient", tags=common_tags
+    "send_single_message should return an error for invalid recipient",
+    tags=common_tags + ["send_single_message"],
 )
 @using(message_adapter=message_adapter)
 def _(message_adapter):
@@ -90,7 +94,8 @@ def _(message_adapter):
 
 
 @test(
-    "save_message should raise an exception if business is not found", tags=common_tags
+    "save_message should raise an exception if business is not found",
+    tags=common_tags + ["save_message"],
 )
 @using(message_adapter=message_adapter, common_message=common_message)
 def _(message_adapter, common_message):
@@ -121,7 +126,7 @@ def _(message_adapter, common_message):
 
 @test(
     "save_message should raise an exception if contact_ref is not found",
-    tags=common_tags,
+    tags=common_tags + ["save_message"],
 )
 @using(message_adapter=message_adapter, common_message=common_message)
 def _(message_adapter, common_message):
@@ -160,7 +165,10 @@ def _(message_adapter, common_message):
         )
 
 
-@test("save_message should create a new contact if not exists", tags=common_tags)
+@test(
+    "save_message should create a new contact if not exists",
+    tags=common_tags + ["save_message"],
+)
 @using(message_adapter=message_adapter, common_message=common_message)
 def _(message_adapter, common_message):
     # Arrange
@@ -197,3 +205,50 @@ def _(message_adapter, common_message):
     # Assert
     mock_business_doc_document.set.assert_called()
     mock_business_doc_document.set.assert_any_call({"ws_id": "123456789012"})
+
+
+@test(
+    "send_massive_message should raise an exception",
+    tags=common_tags + ["send_massive_message"],
+)
+@using(message_adapter=message_adapter, common_message=common_message)
+def _(message_adapter, common_message):
+    # Arrange
+    message: Message = common_message
+    exected_details = [
+        {
+            "status": "error",
+            "message": "Error sending message to 123456789012 from Business 123456789012",
+        },
+        {
+            "status": "success",
+            "message": "Message sent to 123456789012 from Business 123456789012",
+        },
+    ]
+
+    with patch.object(
+        message_adapter,
+        "send_single_message",
+        side_effect=[
+            {
+                "status": "error",
+                "message": f"Error sending message to {message.to} from {message.sender.from_identifier}",
+            },
+            {
+                "status": "success",
+                "message": f"Message sent to {message.to} from {message.sender.from_identifier}",
+            },
+        ],
+    ) as mock_send_single_message:
+        # Act
+        response = message_adapter.send_massive_message([message, message])
+
+        # Assert
+        assert response["status"] == "ok"
+        assert (
+            response["message"] == "Mensajes enviados con éxito a 1 usuarios, 1 errores"
+        )
+        assert len(response["details"]) == 2
+        assert response["details"] == exected_details
+
+        assert mock_send_single_message.call_count == 2
