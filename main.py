@@ -11,6 +11,7 @@ import pandas as pd
 from src.common.utils.notifications import send_email_notification
 from src.infrastructure.chat.controller.chat_controller import chat_bp
 from src.infrastructure.message.controller.mesage_controller import message_bp
+from src.infrastructure.webhook.controller.webhook_controller import webhook_bp
 from src.views.whatsapp_webhook import *
 
 app = Flask(__name__)
@@ -85,6 +86,7 @@ CORS(app)
 
 # app.register_blueprint(chat_bp)
 app.register_blueprint(message_bp)
+app.register_blueprint(webhook_bp)
 app.get("/ping")(lambda: "pong")
 
 if __name__ == "__main__":

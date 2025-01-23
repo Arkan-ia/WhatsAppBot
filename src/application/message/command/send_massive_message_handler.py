@@ -1,12 +1,6 @@
 from injector import inject, singleton
 
 from src.application.message.command.send_message_command import SendMessageCommand
-from src.domain.message.model.message import (
-    Message,
-    TemplateMessage,
-    TextMessage,
-    WhatsAppSender,
-)
 from src.domain.message.service.send_massive import SendMassiveMesageService
 
 

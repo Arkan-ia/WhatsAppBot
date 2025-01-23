@@ -1,8 +1,6 @@
 from typing import Any, Dict, List
 
 from marshmallow import Schema, fields
-from pandas import ExcelFile
-from pydantic import FilePath
 
 
 class SendMassiveMessageCommand(Schema):

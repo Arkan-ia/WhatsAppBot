@@ -11,4 +11,5 @@ class SendSingleMesageService:
         self.__message_repository = message_repository
 
     def run(self, message: Message):
+        # TODO validar si el sender id existe
         return self.__message_repository.send_single_message(message)

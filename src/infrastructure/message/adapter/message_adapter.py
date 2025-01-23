@@ -47,6 +47,8 @@ class MessageWhatsAppApiAdapter(MessageRepository):
     # TODO: implement getting from db
     def get_template_data(self, business_id: str, template_name: str) -> str:
         # TODO: get from db
+        o = {"gano_excel": {"gano_excel_1": "En navidad...."}}
+        result = [business_id][template_name]
         return "template data"
 
     def save_message(

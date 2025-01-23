@@ -11,7 +11,6 @@ from src.infrastructure.di.container import (
     handler_send_massive_message,
     handler_send_message,
 )
-from src.views.whatsapp_webhook import process_message, send_massive_message
 
 message_bp = Blueprint("message", __name__, url_prefix="/message")
 
