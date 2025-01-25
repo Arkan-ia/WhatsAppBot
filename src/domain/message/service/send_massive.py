@@ -3,6 +3,8 @@ from typing import Dict, List
 from injector import inject, singleton
 import pandas as pd
 
+from src.domain.business.port.business_repository import BusinessRepository
+from src.domain.errors.business_not_found import BusinessNotFoundError
 from src.domain.message.model.message import (
     Message,
     Sender,
@@ -16,10 +18,17 @@ from src.domain.message.port.message_repository import MessageRepository
 @singleton
 class SendMassiveMesageService:
     @inject
-    def __init__(self, message_repository: MessageRepository):
+    def __init__(
+        self,
+        message_repository: MessageRepository,
+        business_repository: BusinessRepository,
+    ):
         self.__message_repository = message_repository
+        self.__business_repository = business_repository
 
     def run(self, file: any, metadata: Dict[str, str]):
+        if not self.__business_repository.exists(metadata.get("from_id")):
+            raise BusinessNotFoundError(metadata.get("from_id"))
         file_data = pd.read_excel(file, header=None, converters={0: str})
         users = file_data[0].tolist()
 

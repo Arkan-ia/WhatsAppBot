@@ -40,8 +40,8 @@ class LogAppManager(ABC):
 class ConsoleLogAppManager(LogAppManager):
     @inject
     def __init__(self):
-        self.caller = "ConsoleLogAppManager"
-        self.max_json_length = 400
+        self.__caller = "ConsoleLogAppManager"
+        self.__max_json_length = 400
 
         logger.remove()
         logger.add(
@@ -54,12 +54,12 @@ class ConsoleLogAppManager(LogAppManager):
         self.__logger = logger
 
     def _get_message(self) -> str:
-        return f"[{self.caller}]"
+        return f"[{self.__caller}]"
 
     def _parse_message(self, *message: any) -> list[str]:
         return [
             (
-                json.dumps(arg, indent=2)[: self.max_json_length] + "... [truncated]"
+                json.dumps(arg, indent=2)[: self.__max_json_length] + "... [truncated]"
                 if isinstance(arg, dict)
                 else str(arg)
             )
@@ -79,11 +79,11 @@ class ConsoleLogAppManager(LogAppManager):
         self.__logger.error(" ".join(self._parse_message(*message)))
 
     def set_caller(self, caller: str) -> None:
-        self.caller = caller
+        self.__caller = caller
         self.__logger = self.__logger.bind(caller=caller)
 
     def set_max_json_length(self, max_json_length: int) -> None:
-        self.max_json_length = max_json_length
+        self.__max_json_length = max_json_length
 
     def clear(self) -> None:
         pass
