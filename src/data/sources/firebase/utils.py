@@ -54,7 +54,7 @@ def get_contact_ref(ws_id, phone_number: str):
             )
             return None
         user_doc = user_ref[0].reference
-        # TODO: A veces separa a un contacto de otro debido al 57. Hacer que sean iguales.
+
         contact_query = (
             user_doc.collection("contacts")
             .where("phone_number", "==", phone_number)

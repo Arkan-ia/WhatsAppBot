@@ -69,8 +69,7 @@ class TextMessage(WhatsAppMessage):
 
 
 class MarkReadMessage(WhatsAppMessage):
-    # TODO: Implement
-    to_number = ""
+    to_number = "" #N No quitar
 
     def __init__(self, message_id: str):
         self.message_id = message_id

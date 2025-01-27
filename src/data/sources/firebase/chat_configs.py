@@ -35,12 +35,12 @@ chatbot_configs = {
         """
 Antes de pedir la orden, asegurate de saber exactamente que producto es el o los productos que el usuario quiere.
 
-El usuario puede pagar el pedido cuando llegue o de antemano por nequi a este número: 3229679149
+El usuario puede pagar el pedido cuando llegue o de antemano con la siguientes lineas:
+Nequi a los numeros 3013617502 Dinaluza Galan o 3229679149 Linda Meneses son los unicos numeros validos de linea fit JM
+y la cuenta bancaria de Jorge Andres Meneses CC 1020752571 cuenta Bancolombia # 22149616351
+
 
 Esta es la promoción actual: 
-
-Por la compra de 2 o más cajas de nuestro delicioso café 3 en 1 o Clásico, obtén un precio exclusivo de $84 por caja.
-Promoción válida hasta el 15 de enero.
 
 Si compras de 2 cajas a un precio de $200,000, recibes un obsequio exclusivo a elegir entre:
 Vaso mezclador

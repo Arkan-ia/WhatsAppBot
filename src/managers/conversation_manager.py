@@ -59,7 +59,7 @@ class ConversationManager:
                 try:
                     delete_task(current_task)
                 except NotFound:
-                    
+
                     pass
 
             answer_later_task = create_task(
@@ -70,7 +70,7 @@ class ConversationManager:
                         "from_id": self.from_whatsapp_id,
                         "token": self.token,
                         # TODO: Replace with agent inteligent response
-                        "message": "Hola, pudiste revisar lo que te envié?",
+                        "message": "Hola, aún te interesan los productos?",
                     }
                 ),
             )
