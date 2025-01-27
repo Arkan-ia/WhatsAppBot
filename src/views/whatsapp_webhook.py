@@ -211,6 +211,8 @@ def send_massive_message():
 
     messages = []
     for user in users:
+        user = str(user)
+        
         if not user.isdigit():
             continue
         msg = TemplateMessage(template=template, to_number=user, code=language_code)
@@ -328,28 +330,26 @@ def send_message():
 
 ## -------- TODO: ##
 def get_template_message_content(template):
-    if template == "gano_excel_1":
-        return """
-        ¡Ey, es hora de quemar esos buñuelos y natilla! 🏃
+    template_messages = {
+        "gano_excel_1": """🌟 ¡Gran Lanzamiento de la Línea Fit JM! 🌟
+¡Hola! 😊 Hoy queremos compartir contigo una excelente noticia: estrenamos una nueva línea diseñada especialmente para facilitar tu proceso de compra y ofrecerte los mejores productos saludables.
 
-        Año nuevo, vida nueva. 😎 Nada mejor que Café y Ganoderma, energía y salud en un mismo producto. ☕ Para iniciar este año con toda, llevas 2 o más cajas de nuestro café 3 en 1 o clásico, y llevas todo por un precio especial ¡Menos precio y más salud, una ganga! 🤑 
-        La promo es hasta el 15 de enero. 🔖"""
+🎉 Además, ¡tenemos promociones exclusivas por lanzamiento!
+Escríbele a Jorge, nuestro asesor, y descubre cómo puedes aprovechar estas ofertas hoy mismo.
 
-    elif template == "gano_excel_2":
-        return """
-        ¡Este año sí vas a cumplir las promesas de año nuevo! ¿Cierto? 🧐
+📲 ¡Estamos aquí para ayudarte a dar el siguiente paso hacia un estilo de vida más saludable!""",
+        "gano_excel_2": """¡Este año sí vas a cumplir las promesas de año nuevo! ¿Cierto? 🧐
 
-        Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
-        La promo es hasta el 15 de enero. 🛒"""
-
-    elif template == "ano_nuevo":
-        return """☕✨ ¡Feliz Año Nuevo! ✨☕
+Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
+La promo es hasta el 15 de enero. 🛒""",
+        "ano_nuevo": """☕✨ ¡Feliz Año Nuevo! ✨☕
 
         Si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, te damos un precio especial. 
-        La promo es hasta el 15 de enero. 🏃‍♀"""
+        La promo es hasta el 15 de enero. 🏃‍♀""",
+        "hola": """Hola""",
+    }
 
-    elif template == "hola":
-        return """Hola"""
-
+    if template in template_messages:
+        return template_messages[template]
     else:
         raise Exception("No se encontró el contenido del template solicitado.")
