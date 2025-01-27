@@ -10,7 +10,7 @@ from src.application.chat.command.chat_with_costumer_handler import (
 from src.domain.chat.service.chat_with_costumer import ChatWithCostumerService
 from src.domain.message.service.send_massive import SendMassiveMesageService
 from src.domain.message.service.send_single import SendSingleMesageService
-from src.infrastructure.business.adapter.business_adater import BusinessModule
+from src.infrastructure.business.adapter.business_adapter import BusinessModule
 from src.infrastructure.chat.adapter.chat_adapter import ChatModule
 from src.infrastructure.message.adapter.message_adapter import MessageModule
 from src.infrastructure.shared.http.http_manager import HttpManager, HttpModule
