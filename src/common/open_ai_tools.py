@@ -1,8 +1,13 @@
 import json
 import logging
+from src.data.sources.firebase.config import db
+import firebase_admin
+
 from typing import Any, Dict
 from src.common.utils.notifications import send_email_notification
 from src.data.sources.firebase.contact_impl import ContactFirebaseRepository
+
+
 def get_notify_payment_mail_tool():
     return {
         "type": "function",
@@ -40,6 +45,10 @@ def get_notify_payment_mail_tool():
                         "type": "string",
                         "description": "La ciudad del cliente.",
                     },
+                    "email": {
+                        "type": "string",
+                        "description": "El correo electrónico del cliente.",
+                    },
                 },
                 "required": ["products", "price", "cedula", "address", "city"],
             },
@@ -56,26 +65,28 @@ def notify_payment_mail(
     cedula: str = None,
     address: str = None,
     city: str = None,
+    email: str = None,
 ):
     """
-    Envía un correo electrónico notificando un pago.
+    Envía un correo electrónico notificando un pago y registra los detalles en la base de datos.
 
     Args:
         to (str): Dirección de correo del destinatario
-        pedido_realizado (str): El pedido realizado por el cliente
-        monto_total (float): El monto total del pedido
+        products (str): Los productos realizados por el cliente.
+        price (float): El precio total del pedido.
         phone_number (str, optional): El número de teléfono del cliente.
         name (str, optional): El nombre del cliente.
         cedula (str, optional): La cédula del cliente.
         address (str, optional): La dirección del cliente.
         city (str, optional): La ciudad del cliente.
+        email (str, optional): El correo electrónico del cliente.
 
     Returns:
         None
     """
     try:
         subject = "Nueva solicitud de pago"
-        body = f"Un cliente ha solicitado realizar un pago. Los detalles del cliente son:\n- Precio: {price}\n- Productos: {products}\n- Nombre: {name}\n- Número de teléfono: {phone_number}\n- Cédula: {cedula}\n- Dirección: {address}\n- Ciudad: {city}.\n Por favor revisa tu panel de control en https://arkania.flutterflow.app/chats"
+        body = f"Un cliente ha solicitado realizar un pago. Los detalles del cliente son:\n- Precio: {price}\n- Productos: {products}\n- Nombre: {name}\n- Número de teléfono: {phone_number}\n- Cédula: {cedula}\n- Dirección: {address}\n- Ciudad: {city}\n- Correo electrónico: {email}.\n Por favor revisa tu panel de control en https://arkania.flutterflow.app/chats"
 
         send_email_notification(to=to, message=body, subject=subject)
         send_email_notification(
@@ -86,6 +97,20 @@ def notify_payment_mail(
         )
         send_email_notification(
             to="kevinskate.kg@gmail.com", message=body, subject=subject
+        )
+
+        db.collection("orders").document().set(
+            {
+                "product_name": products,
+                "amount": price,
+                "phone_number": phone_number,
+                "name": name,
+                "document_id": cedula,
+                "address": address,
+                "city": city,
+                "email": email,
+                "created_at": firebase_admin.firestore.firestore.SERVER_TIMESTAMP,
+            }
         )
 
         logging.info(f"Correo de notificación de pago enviado a {to}")

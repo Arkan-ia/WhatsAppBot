@@ -1,6 +1,8 @@
 import json
 import logging
 from typing import Dict, Any
+from src.data.sources.firebase.config import db
+
 
 from src.common.utils.openai_utils import add_context_to_chatbot, generate_answer
 from src.data.models.chatbot import ChatbotModel
@@ -21,11 +23,12 @@ class ChatbotService:
         return self.generate_answer_from_text_with_vector_db(
             user_data, messages, self.chatbot_model.tools
         )
-    
+
     def generate_answer_from_text_with_vector_db(
         self, user_data: Dict[str, Any], messages: list, tools, image=None
     ):
         """Procesa mensajes de texto"""
+
         user_query = messages[-1]
 
         relevant_sections = self.chatbot_model.vectorstore.retrieve_relevant_sections(
@@ -34,7 +37,15 @@ class ChatbotService:
 
         if image:
             image_message = {"type": "image_url", "image_url": {"url": image}}
-            user_query = [{"role": "user", "content": [{"type": "text", "text": "¿Cuál es la pregunta?"}, image_message]}]
+            user_query = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "¿Cuál es la pregunta?"},
+                        image_message,
+                    ],
+                }
+            ]
 
         try:
             context = " ".join(relevant_sections)
@@ -44,7 +55,9 @@ class ChatbotService:
 
             messages = [{"role": "system", "content": system_prompt}, *messages]
             response = generate_answer(messages, tools)
-            logging.info(f"Respuesta: {response}")  # Cambiado de error a info para reflejar el éxito
+            logging.info(
+                f"Respuesta: {response}"
+            )  # Cambiado de error a info para reflejar el éxito
             return response
 
         except Exception as e:

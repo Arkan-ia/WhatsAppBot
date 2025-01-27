@@ -1,58 +1,50 @@
 import logging
-from typing import List
+import tiktoken
+from typing import List, Optional
 from src.data.sources.firebase.config import db
 from src.data.models.message import ChatMessage
 from src.data.repositories.message_repository import MessageRepository
 from firebase_admin.firestore import firestore
-
-from src.data.sources.firebase.utils import get_contact_ref
-
 
 
 class MessageFirebaseRepository(MessageRepository):
     def validate_phone_number(self, phone_number):
         """Valida el número de teléfono."""
         if len(phone_number) != 12:
-            raise ValueError("El número debe incluir el código de país y tener 12 dígitos.")
+            raise ValueError(
+                "El número debe incluir el código de país y tener 12 dígitos."
+            )
 
-    # No me gusta esta función
-    def get_or_create_user_and_contact(self, user_id, phone_number):
-        """Obtiene el usuario y contacto en una sola operación."""
-        user_ref = db.collection("users").where("ws_id", "==", user_id).limit(1).get()
-        if not user_ref:
-            logging.warning(f"No se encontró ningún usuario con ws_id {user_id}.")
-            return None, None
-
-        user_doc = user_ref[0].reference
-
-        # Intentar obtener el contacto directamente como documento
-        contact_ref = user_doc.collection("contacts").document(phone_number)
-        contact_snapshot = contact_ref.get()
-
-        if not contact_snapshot.exists:
-            logging.info(f"Creando nuevo contacto con número {phone_number}.")
-            contact_ref.set({"phone_number": phone_number})
-
-        return user_doc, contact_ref
-
-    def create_message(self, user_id, phone_number, message, role, **kwargs):
+    def create_message(
+        self,
+        conversation_ref,
+        contact_ref,
+        ws_id,
+        wa_id,
+        phone_number,
+        message,
+        role,
+        **kwargs,
+    ):
         """Añade un mensaje a la conversación."""
         try:
             # Validar el número de teléfono
             self.validate_phone_number(phone_number)
+            # Puede que esto demore
+            enc = tiktoken.encoding_for_model("gpt-4o")
+            tokens = enc.encode(message)
+            # Medir tiempo
 
-            # Obtener o crear usuario y contacto
-            user_doc, contact_ref = self.get_or_create_user_and_contact(user_id, phone_number)
-            if not user_doc or not contact_ref:
-                return
-
-            # Crear el mensaje
-            message_ref = user_doc.collection("messages").document()
+            message_ref = conversation_ref.collection("messages").document()
             message_ref.set(
                 {
                     "contact_ref": contact_ref,
                     "content": message,
                     "role": role,
+                    "ws_id": ws_id,
+                    "wa_id": wa_id,
+                    "tokens": len(tokens),
+                    "phone_number": phone_number,
                     "platform": "whatsapp",
                     "timestamp": firestore.SERVER_TIMESTAMP,
                     **kwargs,
@@ -60,23 +52,27 @@ class MessageFirebaseRepository(MessageRepository):
             )
             logging.info(
                 f"Mensaje {'del usuario' if role else 'del bot'} añadido para {phone_number} "
-                f"del usuario con ws_id {user_id}, id mensaje: {kwargs.get('message_id', 'None')}."
+                f"del usuario con ws_id {ws_id}, id mensaje: {wa_id}."
             )
+
         except ValueError as ve:
             logging.error(f"Error de validación: {ve}")
             raise
         except Exception as e:
-            logging.error(f"Error al añadir mensaje para usuario {user_id}: {e}")
+            logging.error(f"Error al añadir mensaje para usuario {ws_id}: {e}")
             raise
 
-    def get_message(self, msj_id):
+    def get_message(self, msj_id) -> Optional[firestore.DocumentReference]:
         try:
-            mensajes_ref = db.collection_group("messages").where("message_id", "==", msj_id).get()
-            if not mensajes_ref:
+            messages_snapshots = (
+                db.collection_group("messages").where("wa_id", "==", msj_id).get()
+            )
+
+            if not messages_snapshots:
                 print(f"No se encontró ningún mensaje con el id {msj_id}")
                 return None
 
-            return mensajes_ref[0].reference
+            return messages_snapshots[0].reference
         except Exception as e:
             print(f"Error al obtener mensaje con el id {msj_id}: {str(e)}")
             raise
@@ -87,39 +83,32 @@ class MessageFirebaseRepository(MessageRepository):
     def delete_message(self, user_id, phone_number, message, role, **kwargs):
         pass
 
-    def get_messages(self, user_id, phone_number) -> List:
+    def get_messages(self, ws_id, phone_number) -> List:
         """Obtiene la conversación de un usuario con un contacto específico."""
         try:
-            contact_ref = get_contact_ref(user_id, phone_number)
-            if not contact_ref:
-                return None
-
-            user_ref = (
-                db.collection("users").where("ws_id", "==", user_id).limit(1).get()
-            )
-            if not user_ref:
-                print(
-                    f"No se encontró ningún usuario al obtener conversación para {phone_number} para {user_id}"
-                )
-                return None
-            user_doc = user_ref[0].reference
-
-            mensajes_ref = (
-                user_doc.collection("messages")
-                .where("contact_ref", "==", contact_ref)
+            messages_query = (
+                db.collection_group("messages")
+                .where("phone_number", "==", phone_number)
+                .where("ws_id", "==", ws_id)
                 .order_by("timestamp")
             )
 
+            messages_snapshots = messages_query.get()
+
             return [
                 ChatMessage(**message.to_dict()).to_dict()
-                for message in mensajes_ref.get()
+                for message in messages_snapshots
             ]
 
         except Exception as e:
-            print(f"Error al obtener conversación para usuario {user_id}: {str(e)}")
+            print(
+                f"Error al obtener conversación para usuario {phone_number}: {str(e)}"
+            )
             raise
 
-    def store_tool_call_responses(self, from_id, response, number):
+    def store_tool_call_responses(
+        self, from_id, response, number, contact_ref, conversation_ref
+    ):
         tool_call_responses = []
 
         for tool_call in response.tool_calls:
@@ -134,4 +123,12 @@ class MessageFirebaseRepository(MessageRepository):
                 }
             )
 
-        super().create_chat_message(from_id, number, "", tool_calls=tool_call_responses)
+        super().create_chat_message(
+            conversation_ref=conversation_ref,
+            contact_ref=contact_ref,
+            ws_id=from_id,
+            phone_number=number,
+            message="",
+            wa_id="",
+            tool_calls=tool_call_responses,
+        )

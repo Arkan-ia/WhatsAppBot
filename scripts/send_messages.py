@@ -33,7 +33,7 @@ def send(file_path, from_id, token, message, template=None, language_code="es"):
             from_id,
             str(number),
             db_content,
-            message_id=call["body"]["messages"][0]["id"],
+            wa_id=call["body"]["messages"][0]["id"],
         )
 
 

@@ -1,5 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
 import time
+from src.data.sources.firebase.config import db
+
+import firebase_admin
+import firebase_admin.firestore
 from src.common.config import CORS_HEADERS
 from src.common.whatsapp.models.models import (
     TemplateMessage,
@@ -17,6 +21,11 @@ from src.common.utils.whatsapp_utils import (
 )
 from src.data.sources.firebase.message_impl import MessageFirebaseRepository
 import pandas as pd
+
+from src.data.sources.firebase.utils import (
+    get_or_create_contact,
+    get_or_create_conversation,
+)
 
 
 def verify():
@@ -54,9 +63,12 @@ def process_message():
             ### Method ###
             # mark_read_user_message()
             message = MessageFirebaseRepository().get_message(message_id)
-            message.update({"seen": True})
+            if not message:
+                logging.error(f"No se encontró el mensaje {message_id}")
 
-            print(f"Message {message_id} was read.")
+            else:
+                message.update({"status": "seen"})
+                print(f"Message {message_id} was read.")
 
             return jsonify({"status": "ok"}), 200
 
@@ -83,7 +95,6 @@ def process_message():
 
             return jsonify({"status": "ok"}), 200
         else:
-            # if the request is not a WhatsApp API event, return an error
             return (
                 jsonify({"status": "error", "message": "Not a WhatsApp API event"}),
                 404,
@@ -122,11 +133,16 @@ def send_template_message():
         message = TemplateMessage(
             template=template, to_number=to_number, from_id=from_id, parameters=True
         )
-        call = send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+        call = send_whatsapp_message(
+            from_whatsapp_id=from_id, token=token, message=message
+        )
 
         db_content = get_template_message_content(message.template)
         MessageFirebaseRepository().create_chat_message(
-            from_id, message.to_number, db_content, message_id=call["body"]["messages"][0]["id"]
+            from_id,
+            message.to_number,
+            db_content,
+            wa_id=call["body"]["messages"][0]["id"],
         )
 
         return (
@@ -137,7 +153,7 @@ def send_template_message():
                 }
             ),
             200,
-            CORS_HEADERS
+            CORS_HEADERS,
         )
     except Exception as e:
         logging.error(f"Error al iniciar la conversación: {str(e)}")
@@ -173,11 +189,25 @@ def send_massive_message():
                 ),
                 400,
             )
+
     from_id = form.get("from_id")
     token = form.get("token")
     message = form.get("message")
     template = form.get("template")
-    language_code = form.get("language_code")
+    language_code = form.get("language_code") or "es"
+
+    business_snapshots = db.collection("business").where("ws_id", "==", from_id).get()
+    if not business_snapshots:
+        raise Exception(f"No hay business registrado para {from_id}")
+
+    campaign_ref = business_snapshots[0].reference.collection("campaigns").document()
+    campaign_ref.set(
+        {
+            "users_count": len(users),
+            "created_at": firebase_admin.firestore.firestore.SERVER_TIMESTAMP,
+            "platform": "whatsapp",
+        }
+    )
 
     messages = []
     for user in users:
@@ -191,11 +221,35 @@ def send_massive_message():
     def send_msg(msg: WhatsAppMessage):
         call = send_whatsapp_message(from_id, token, msg)
         db_content = get_template_message_content(msg.template)
+
         if not template:
             db_content = msg.text
+
+        contact_ref = get_or_create_contact(msg.to_number, from_id)
+        conversation_ref = get_or_create_conversation(contact_ref)
+
         MessageFirebaseRepository().create_chat_message(
-            from_id, msg.to_number, db_content, message_id=call["body"]["messages"][0]["id"]
+            conversation_ref=conversation_ref,
+            contact_ref=contact_ref,
+            ws_id=from_id,
+            phone_number=msg.to_number,
+            message=db_content,
+            wa_id=call["body"]["messages"][0]["id"],
         )
+
+        contact_ref.update(
+            {
+                "last_message": {
+                    "content": db_content,
+                    "created_at": firebase_admin.firestore.firestore.SERVER_TIMESTAMP,
+                }
+            }
+        )
+
+        campaign_ref.update(
+            {"sent_messages": firebase_admin.firestore.firestore.Increment(1)}
+        )
+
         return call
 
     batch_size = 20
@@ -224,7 +278,7 @@ def send_massive_message():
             }
         ),
         200,
-        CORS_HEADERS
+        CORS_HEADERS,
     )
 
 
@@ -243,20 +297,33 @@ def send_message():
             )
 
         message = TextMessage(number=to_number, text=message)
-        call = send_whatsapp_message(from_whatsapp_id=from_id, token=token, message=message)
+        call = send_whatsapp_message(
+            from_whatsapp_id=from_id, token=token, message=message
+        )
 
         logging.info(call)
+        contact_ref = get_or_create_contact(to_number, from_id)
+        conversation_ref = get_or_create_conversation(contact_ref)
+
         if call["status"] == "success":
             MessageFirebaseRepository().create_chat_message(
-                from_id, to_number, message.text, message_id=call["body"]["messages"][0]["id"]
+                conversation_ref=conversation_ref,
+                contact_ref=contact_ref,
+                ws_id=from_id,
+                phone_number=to_number,
+                message=message.text,
+                wa_id=call["body"]["messages"][0]["id"],
             )
 
-        return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200, CORS_HEADERS
+        return (
+            jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}),
+            200,
+            CORS_HEADERS,
+        )
 
     except Exception as e:
         logging.error(e)
-        return jsonify({"status": "error", "message": e}), 500
-
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 ## -------- TODO: ##
@@ -274,7 +341,7 @@ def get_template_message_content(template):
 
         Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
         La promo es hasta el 15 de enero. 🛒"""
-    
+
     elif template == "ano_nuevo":
         return """☕✨ ¡Feliz Año Nuevo! ✨☕
 
@@ -283,7 +350,6 @@ def get_template_message_content(template):
 
     elif template == "hola":
         return """Hola"""
-    
+
     else:
         raise Exception("No se encontró el contenido del template solicitado.")
-

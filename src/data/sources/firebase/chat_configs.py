@@ -23,7 +23,8 @@ chatbot_configs = {
                 kargs["name"],
                 kargs["cedula"],
                 kargs["address"],
-                kargs["city"]
+                kargs["city"],
+                kargs["email"]
             ),
             # "store_user_data": lambda kargs: store_user_data(
             #     "450361964838178", kargs["phone_number"], kargs
