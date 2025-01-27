@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 
 from src.common.utils.notifications import send_email_notification
-from src.infrastructure.middlewares.register import register_middlewares
+from src.infrastructure.shared.middlewares.register import register_middlewares
 from src.views.whatsapp_webhook import *
 
 load_dotenv()
