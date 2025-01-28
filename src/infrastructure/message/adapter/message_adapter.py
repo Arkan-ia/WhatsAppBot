@@ -47,9 +47,29 @@ class MessageWhatsAppApiAdapter(MessageRepository):
     # TODO: implement getting from db
     def get_template_data(self, business_id: str, template_name: str) -> str:
         # TODO: get from db
-        o = {"gano_excel": {"gano_excel_1": "En navidad...."}}
-        result = [business_id][template_name]
-        return "template data"
+        db = {
+            "450361964838178": {
+                "gano_excel_1": """🌟 ¡Gran Lanzamiento de la Línea Fit JM! 🌟
+¡Hola! 😊 Hoy queremos compartir contigo una excelente noticia: estrenamos una nueva línea diseñada especialmente para facilitar tu proceso de compra y ofrecerte los mejores productos saludables.
+
+🎉 Además, ¡tenemos promociones exclusivas por lanzamiento!
+Escríbele a Jorge, nuestro asesor, y descubre cómo puedes aprovechar estas ofertas hoy mismo.
+
+📲 ¡Estamos aquí para ayudarte a dar el siguiente paso hacia un estilo de vida más saludable!""",
+                "gano_excel_2": """¡Este año sí vas a cumplir las promesas de año nuevo! ¿Cierto? 🧐
+
+Si pediste por salud y vida, aquí llegó la señal divina 🙏 Que no te falte el café en cada mañana para iniciar con energía, fusionado con Ganoderma para una vida larga y prospera. ☕ Si diciembre te dejó apretado, relájate. 😌 Porque si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, vas a tener tremendo descuento en tú compra. 😱 ¡Estamos botados! 
+La promo es hasta el 15 de enero. 🛒""",
+                "ano_nuevo": """☕✨ ¡Feliz Año Nuevo! ✨☕
+
+        Si llevas 2 o más cajas de nuestro café 3 en 1 o clásico, te damos un precio especial. 
+        La promo es hasta el 15 de enero. 🏃‍♀""",
+                "hola": """Hola""",
+            },
+        }
+
+        result = db[business_id][template_name]
+        return result
 
     def save_message(
         self,

@@ -17,8 +17,10 @@ class BusinessAdapter(BusinessRepository):
         self.__logger.set_caller("BusinessAdapter")
 
     def exists(self, business_id):
-        # TODO: implement
-        return False
+        business_ref = self.__storage.getRawDocument("business", business_id)
+        business_doc = business_ref.get()
+
+        return business_doc.exists
 
 
 BusinessRepositoryMock = MagicMock()
