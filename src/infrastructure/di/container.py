@@ -50,7 +50,7 @@ handler_send_message: HandlerSendMessage = HandlerSendMessage(
 handler_send_massive_message: HandlerSendMassiveMessage = HandlerSendMassiveMessage(
     send_massive_message_service
 )
-handler_chat_with_costumer: HandlerChatWithCostumer = ChatWithCostumerService(
+handler_chat_with_costumer: HandlerChatWithCostumer = HandlerChatWithCostumer(
     chat_with_costumer_service
 )
 
