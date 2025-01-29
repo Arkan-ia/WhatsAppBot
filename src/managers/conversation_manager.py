@@ -9,8 +9,7 @@ from src.common.utils.openai_utils import get_media_from_id, get_text_from_audio
 from src.common.utils.whatsapp_utils import get_whatsapp_message, send_whatsapp_message
 from src.common.whatsapp.models.models import MarkReadMessage, TextMessage
 
-from src.data.sources.firebase.message_impl import MessageFirebaseRepository
-
+from src.domain.message.port.message_repository import MessageRepository
 from src.domain.conversation.port.conversation_repository import ConversationRepository
 from src.domain.lead.port.lead_repository import LeadRepository
 from src.services.chat_service import ChatbotService
@@ -21,7 +20,7 @@ class ConversationManager:
         self.chatbot = chatbot
         self.from_whatsapp_id = from_whatsapp_id
         self.token = token
-        self.message_repository = MessageFirebaseRepository()
+        self.message_repository = MessageRepository()
         self.lead_repository = LeadRepository()
         self.conversation_repository = ConversationRepository()
 
