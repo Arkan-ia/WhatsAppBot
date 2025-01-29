@@ -1,4 +1,6 @@
 import traceback
+
+from marshmallow import ValidationError
 from src.infrastructure.di.container import injector
 from src.domain.errors.core_error import CoreError
 from src.infrastructure.shared.logger.logger import LogAppManager
@@ -18,3 +20,8 @@ def register_middlewares(app):
     def handler(e: Exception):
         logger.error(e, "\n", traceback.format_exc())
         return "An internal error has occurred", 500
+
+    @app.errorhandler(ValidationError)
+    def handler(e: ValidationError):
+        logger.error(e, "\n", traceback.format_exc())
+        return e.messages, 400

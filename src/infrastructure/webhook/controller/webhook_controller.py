@@ -1,7 +1,6 @@
 from flask import Blueprint, request
 
-from src.application.chat.command.chat_with_costumer_command import (
-    ChatWithCostumerCommand,
+from src.application.chat.command.chat_with_lead_command import (
     MetaWebhookSchema,
 )
 from src.views.whatsapp_webhook import process_message, verify
@@ -18,7 +17,5 @@ def verify_connection():
 
 @webhook_bp.post("/")
 def chat():
-    print("json", request.get_json())
     command = MetaWebhookSchema().load(request.get_json())
-    print("command ->", command)
     return handler_chat_with_costumer.run(command)

@@ -4,10 +4,10 @@ from src.application.message.command.send_massive_message_handler import (
     HandlerSendMassiveMessage,
 )
 from src.application.message.command.send_message_handler import HandlerSendMessage
-from src.application.chat.command.chat_with_costumer_handler import (
-    HandlerChatWithCostumer,
+from src.application.chat.command.chat_with_lead_handler import (
+    HandlerChatWithLead,
 )
-from src.domain.chat.service.chat_with_costumer import ChatWithCostumerService
+from src.domain.chat.service.chat_with_lead import ChatWithLeadService
 from src.domain.message.service.send_massive import SendMassiveMesageService
 from src.domain.message.service.send_single import SendSingleMesageService
 from src.infrastructure.business.adapter.business_adapter import BusinessModule
@@ -39,9 +39,7 @@ send_single_message_service: SendSingleMesageService = injector.get(
 send_massive_message_service: SendMassiveMesageService = injector.get(
     SendMassiveMesageService
 )
-chat_with_costumer_service: ChatWithCostumerService = injector.get(
-    ChatWithCostumerService
-)
+chat_with_lead_service: ChatWithLeadService = injector.get(ChatWithLeadService)
 
 # Handlers
 handler_send_message: HandlerSendMessage = HandlerSendMessage(
@@ -50,8 +48,8 @@ handler_send_message: HandlerSendMessage = HandlerSendMessage(
 handler_send_massive_message: HandlerSendMassiveMessage = HandlerSendMassiveMessage(
     send_massive_message_service
 )
-handler_chat_with_costumer: HandlerChatWithCostumer = HandlerChatWithCostumer(
-    chat_with_costumer_service
+handler_chat_with_costumer: HandlerChatWithLead = HandlerChatWithLead(
+    chat_with_lead_service
 )
 
 
