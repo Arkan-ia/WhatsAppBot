@@ -46,7 +46,6 @@ class MessageWhatsAppApiAdapter(MessageRepository):
 
     # TODO: implement getting from db
     def get_template_data(self, business_id: str, template_name: str) -> str:
-        # TODO: get from db
         db = {
             "450361964838178": {
                 "gano_excel_1": """🌟 ¡Gran Lanzamiento de la Línea Fit JM! 🌟
@@ -78,7 +77,7 @@ La promo es hasta el 15 de enero. 🛒""",
         platform: Literal["whatsapp"],
     ) -> str:
         business_ref: CollectionReference = (
-            self.__storage.getRawCollection("users")
+            self.__storage.getRawCollection("business")
             .where("ws_id", "==", message.sender.from_identifier)
             .limit(1)
             .get()

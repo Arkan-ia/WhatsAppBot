@@ -44,6 +44,7 @@ class SendMassiveMesageService:
         messages: List[Message] = []
         template_data = ""
         for user in users:
+            user = str(user)
             if not user.isdigit():
                 continue
 

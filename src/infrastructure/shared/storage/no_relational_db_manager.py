@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Any
 
 from injector import Binder, Module, inject, singleton
@@ -36,18 +36,18 @@ class FirebaseNoRelationalDBManager(NoRealtionalDBManager):
                 "src/infrastructure/shared/storage/firebase.json"
             )
             firebase_admin.initialize_app(cred)
-            self.__db = fs.client()
-            self.__logger.info(f"Firebase started {self.__db}")
+            self.db = fs.client()
+            self.__logger.info(f"Firebase started {self.db}")
         except Exception as e:
             self.__logger.error("Error starting firebase", e)
 
     def getRawDocument(
         self, collection: str, document: str
     ) -> firestore.DocumentReference:
-        return self.__db.collection(collection).document(document)
+        return self.db.collection(collection).document(document)
 
     def getRawCollection(self, collection: str) -> firestore.CollectionReference:
-        return self.__db.collection(collection)
+        return self.db.collection(collection)
 
     def getServerTimestamp(self) -> Any:
         return firestore.SERVER_TIMESTAMP

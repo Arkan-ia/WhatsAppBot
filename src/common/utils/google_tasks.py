@@ -1,0 +1,60 @@
+import json
+from google.cloud import tasks_v2
+from google.protobuf import timestamp_pb2
+import datetime
+from google.oauth2 import service_account
+
+
+def create_task(url, payload=None):
+    # Ruta a tu archivo JSON de credenciales
+    credentials_path = "./key.json"
+
+    # Carga las credenciales
+    credentials = service_account.Credentials.from_service_account_file(
+        credentials_path
+    )
+
+    # Crear cliente con las credenciales
+    client = tasks_v2.CloudTasksClient(credentials=credentials)
+
+    parent = client.queue_path(
+        "innate-tempo-448214-e5", "northamerica-northeast1", "continueConversation"
+    )
+
+    # Configurar la solicitud HTTP
+    task = {
+        "http_request": {
+            "http_method": "POST",
+            "headers": {"Content-Type": "application/json"},
+            "url": url,
+        }
+    }
+
+    if payload:
+        task["http_request"]["body"] = payload.encode("utf-8")
+
+    d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+    timestamp = timestamp_pb2.Timestamp()
+    timestamp.FromDatetime(d)
+    task["schedule_time"] = timestamp
+
+    response = client.create_task(request={"parent": parent, "task": task})
+    print(f"Tarea creada: {response.name}")
+    return response.name  # Retorna el identificador de la tarea creada
+
+
+def delete_task(task_name):
+    # Ruta a tu archivo JSON de credenciales
+    credentials_path = "./key.json"
+
+    # Carga las credenciales
+    credentials = service_account.Credentials.from_service_account_file(
+        credentials_path
+    )
+
+    # Crear cliente con las credenciales
+    client = tasks_v2.CloudTasksClient(credentials=credentials)
+
+    # Eliminar la tarea
+    client.delete_task(request={"name": task_name})
+    print(f"Tarea eliminada: {task_name}")
