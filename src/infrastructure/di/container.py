@@ -13,12 +13,14 @@ from src.domain.message.service.send_single import SendSingleMesageService
 from src.infrastructure.business.adapter.business_adapter import BusinessModule
 from src.infrastructure.chat.adapter.chat_adapter import ChatModule
 from src.infrastructure.message.adapter.message_adapter import MessageModule
+from src.infrastructure.shared.gpt.gpt_manager import GPTManagerModule
 from src.infrastructure.shared.http.http_manager import HttpManager, HttpModule
 from src.infrastructure.shared.logger.logger import LoggerModule
 from src.infrastructure.shared.messaging.mesaging_manager import MessagingManagerModule
 from src.infrastructure.shared.storage.no_relational_db_manager import (
     NoRelationalDBModule,
 )
+from src.infrastructure.shared.vectorstore.vector_store_manager import VectorStoreModule
 
 injector = Injector(
     [
@@ -29,6 +31,8 @@ injector = Injector(
         MessagingManagerModule,
         NoRelationalDBModule,
         BusinessModule,
+        VectorStoreModule,
+        GPTManagerModule,
     ]
 )
 

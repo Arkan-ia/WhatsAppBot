@@ -18,8 +18,6 @@ class ChatWithLeadService:
         self.__business_repository = business_repository
 
     def run(self, chat: Chat) -> str:
-        print("Got chat", chat)
-
         # if not self.__business_repository.exists(chat.business.id):
         #     raise BusinessNotFoundError(chat.business.id)
 
@@ -29,5 +27,5 @@ class ChatWithLeadService:
             return {
                 "status": "ok",
             }, 200
-        return "Chat with costumer", 200
-        # return self.__chat_repository.chat_with_customer(message, business_id)
+
+        return self.__chat_repository.chat_with_customer(chat), 200
