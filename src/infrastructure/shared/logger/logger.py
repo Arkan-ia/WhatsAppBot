@@ -46,7 +46,9 @@ class ConsoleLogAppManager(LogAppManager):
         logger.remove()
         logger.add(
             sys.stderr,
-            format="<level>[{time:YYYY-MM-DD HH:mm:ss}] [{level}] <bold><blue>[{extra[caller]}]</blue></bold>  </level> <green>{message}</green>",
+            format=(
+                "<level>[{time:YYYY-MM-DD HH:mm:ss}] [{level}] <bg #000066><fg #2423b5><bold>[{extra[caller]}]</bold></fg #2423b5></bg #000066> {message} </level>"
+            ),
             level=os.getenv("LOG_LEVEL", "DEBUG"),
             colorize=True,
         )
