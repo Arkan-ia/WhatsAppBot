@@ -54,3 +54,11 @@ class Chat:
     @message_type.setter
     def message_type(self, message_type: MessageType) -> None:
         self.__message_type = message_type
+
+    @property
+    def message_id(self) -> str:
+        return self.__message_id
+
+    @message_id.setter
+    def message_id(self, message_id: str) -> None:
+        self.__message_id = message_id

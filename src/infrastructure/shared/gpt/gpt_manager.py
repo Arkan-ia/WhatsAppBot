@@ -10,6 +10,7 @@ from src.data.sources.firebase import chat_configs
 from src.infrastructure.shared.logger.logger import LogAppManager
 from src.data.sources.firebase.chat_configs import chatbot_configs
 
+from src.infrastructure.shared.messaging.mesaging_manager import MessagingManager
 from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
 from src.infrastructure.shared.vectorstore.vector_store_manager import (
     VectorStoreManager,
@@ -40,7 +41,11 @@ class GPTManager(ABC):
 @singleton
 class OpenAIGPTManager(GPTManager):
     @inject
-    def __init__(self, logger: LogAppManager, injector: Injector):
+    def __init__(
+        self,
+        logger: LogAppManager,
+        injector: Injector,
+    ):
         # TODO: get paths and data from config or database
         agent_configs_data = [
             {

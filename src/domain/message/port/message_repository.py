@@ -25,3 +25,11 @@ class MessageRepository(ABC):
     @abstractmethod
     def get_template_data(self, business_id: str, template_name: str) -> str:
         pass
+
+    @abstractmethod
+    def mark_message_as_read(self, message: Message) -> str:
+        pass
+
+    @abstractmethod
+    def get_messages(self, business_id: str, lead_id: str, limit: int) -> List[Message]:
+        pass

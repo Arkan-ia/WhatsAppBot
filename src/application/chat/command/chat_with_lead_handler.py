@@ -31,5 +31,6 @@ class HandlerChatWithLead:
 
         chat.message_type = MessageType(command.get("message_type"))
         chat.message = command.get("message_content")
+        chat.message_id = command.get("message_id")
 
         return self.__chat_service.run(chat)

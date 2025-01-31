@@ -10,6 +10,7 @@ class ChatWithLeadCommand(Schema):
     message_type = fields.Str(required=True)
     business = fields.Nested(lambda: BusinessSchema(), required=True, unknown=EXCLUDE)
     lead = fields.Nested(lambda: LeadSchema(), required=True, unknown=EXCLUDE)
+    message_id = fields.Str(required=False)
 
     @post_load
     def make_command(self, data, **kwargs):
@@ -45,6 +46,7 @@ class MetaWebhookSchema(Schema):
                     "message_type": message["type"],
                     "business": BusinessSchema().load(business_data),
                     "lead": LeadSchema().load(lead_data),
+                    "message_id": message["id"],
                 }
             )
 

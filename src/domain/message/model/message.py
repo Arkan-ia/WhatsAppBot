@@ -64,6 +64,24 @@ class Message(ABC, Generic[T]):
     def get_message(self) -> T:
         pass
 
+    @property
+    def message_id(self) -> str:
+        pass
+
+    @message_id.setter
+    @abstractmethod
+    def message_id(self, id: str) -> None:
+        pass
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        pass
+
+    @metadata.setter
+    @abstractmethod
+    def metadata(self, metadata: Dict[str, Any]) -> None:
+        pass
+
 
 class WhatsAppSender(Sender):
     @property
@@ -84,9 +102,6 @@ class WhatsAppSender(Sender):
 
 
 class TextMessage(Message[Dict[str, Any]]):
-    def __init__(self) -> None:
-        return
-
     @property
     def to(self) -> str:
         return self.__to
@@ -110,6 +125,22 @@ class TextMessage(Message[Dict[str, Any]]):
     @content.setter
     def content(self, content: str) -> None:
         self.__content = content
+
+    @property
+    def message_id(self) -> str:
+        return self.__id
+
+    @message_id.setter
+    def message_id(self, id: str) -> None:
+        self.__id = id
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return self.__metadata
+
+    @metadata.setter
+    def metadata(self, metadata: Dict[str, Any]) -> None:
+        self.__metadata = metadata
 
     def get_message(self) -> Dict[str, Any]:
         return {
@@ -170,6 +201,22 @@ class TemplateMessage(Message[Dict[str, Any]]):
     def content(self, content: str) -> None:
         self.__content = content
 
+    @property
+    def message_id(self) -> str:
+        return self.__id
+
+    @message_id.setter
+    def message_id(self, id: str) -> None:
+        self.__id = id
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return self.__metadata
+
+    @metadata.setter
+    def metadata(self, metadata: Dict[str, Any]) -> None:
+        self.__metadata = metadata
+
     def get_message(self) -> Dict[str, Any]:
         template_object = {
             "name": self.__template,
@@ -184,4 +231,53 @@ class TemplateMessage(Message[Dict[str, Any]]):
             "to": self.__to,
             "type": "template",
             "template": template_object,
+        }
+
+
+class ReadMessage(Message[Dict[str, Any]]):
+    @property
+    def to(self) -> str:
+        return self.__to
+
+    @to.setter
+    def to(self, to: str) -> None:
+        self.__to = to
+
+    @property
+    def sender(self) -> WhatsAppSender:
+        return self.__sender
+
+    @sender.setter
+    def sender(self, sender: WhatsAppSender) -> None:
+        self.__sender = sender
+
+    @property
+    def content(self) -> str:
+        return self.__content
+
+    @content.setter
+    def content(self, content: str) -> None:
+        self.__content = content
+
+    @property
+    def message_id(self) -> str:
+        return self.__id
+
+    @message_id.setter
+    def message_id(self, id: str) -> None:
+        self.__id = id
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return self.__metadata
+
+    @metadata.setter
+    def metadata(self, metadata: Dict[str, Any]) -> None:
+        self.__metadata = metadata
+
+    def get_message(self) -> Dict[str, Any]:
+        return {
+            "messaging_product": "whatsapp",
+            "status": "read",
+            "message_id": self.__id,
         }
