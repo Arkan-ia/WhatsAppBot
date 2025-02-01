@@ -73,7 +73,8 @@ class ConversationManager:
                     "to_number": message["from"],
                     "from_id": self.from_whatsapp_id,
                     "token": self.token,
-                    "message": "Hola, aún te interesan los productos?",
+                    # Crear nuevo endpoint para esto
+                    "message": "Hola, aún te interesan los productos?",  # generate answer
                 }
             ),
         )

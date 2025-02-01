@@ -1,22 +1,23 @@
-import json
 import logging
 from typing import Any, Dict
 
 from src.common.utils.openai_utils import add_context_to_chatbot, generate_answer
 from src.data.models.chatbot import ChatbotModel
-from src.data.sources.firebase.contact_impl import ContactFirebaseRepository
-from src.data.sources.firebase.message_impl import MessageFirebaseRepository
+from src.domain.message.port.message_repository import MessageRepository
+from src.domain.lead.port.lead_repository import LeadRepository
 
 
 class ChatbotService:
     def __init__(self, chatbot_model: ChatbotModel):
         self.chatbot_model = chatbot_model
+        self.message_repository = MessageRepository()
+        self.lead_repository = LeadRepository()
 
     def answer_conversation(self, from_whatsapp_id, to_number):
-        messages = MessageFirebaseRepository().get_messages(
+        messages = self.message_repository.get_messages(
             from_whatsapp_id, to_number
         )[-10:]
-        user_data = ContactFirebaseRepository().get_contact(from_whatsapp_id, to_number)
+        user_data = self.lead_repository.get_or_create_contact(from_whatsapp_id, to_number)
 
         return self.generate_answer_from_text_with_vector_db(
             user_data, messages, self.chatbot_model.tools

@@ -37,7 +37,7 @@ class LeadAdapter(LeadRepository):
         self.__logger.set_caller("ConversationAdapter")
         self.__storage = no_rel_db
 
-    # COSOS QUE TOCA CAMBIAR DE LADO
+
     def get_or_create_contact(
         self, phone_number: str, from_whatsapp_id: str
     ) -> DocumentReference:
@@ -87,6 +87,32 @@ class LeadAdapter(LeadRepository):
                 }
             }
         )
+    
+    def update_contact(self, ws_id, phone_number, data):
+        """Actualiza los datos de un contacto."""
+        try:
+            if len(phone_number) != 12:
+                raise Exception(
+                    "Los números a consultar deben tener su respectivo codigo de país"
+                )
+
+            contact_query = (
+                self.__storage.db.collection_group("contacts")
+                .where("ws_id", "==", ws_id)
+                .where("phone_number", "==", phone_number)
+                .limit(1)
+            )
+
+            contact_snapshots = contact_query.get()
+            contact_snapshots[0].reference.update(data)
+            
+            return contact_snapshots[0].get()
+
+        except Exception as e:
+            self.__logger.error(
+                 f"Error al actualizar datos del contacto {phone_number} para {ws_id}: {str(e)}"
+             )            
+            raise
 
 
 LeadRepositoryMock = MagicMock()

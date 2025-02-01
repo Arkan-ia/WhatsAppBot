@@ -11,5 +11,11 @@ class LeadRepository:
     ) -> DocumentReference:
         pass
 
+    @abstractmethod
     def update_last_message(self, contact_ref, content):
         pass
+
+    @abstractmethod
+    def update_contact(self, ws_id, phone_number, data):
+        pass
+

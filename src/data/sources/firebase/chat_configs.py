@@ -48,6 +48,7 @@ Afeitadora eléctrica
 Plancha portátil para el cabello
 Mini parlante
 
+Si compras mas de 2 cajas, cada caja tiene el precio normal.
 Para envíos de 200.000 en adelante el envío completamente gratuito.
 
 
