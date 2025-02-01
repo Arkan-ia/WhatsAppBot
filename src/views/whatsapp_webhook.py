@@ -17,7 +17,9 @@ from src.common.whatsapp.models.models import (
     TextMessage,
     WhatsAppMessage,
 )
-from src.data.sources.firebase.message_impl import MessageFirebaseRepository
+from src.domain.conversation.port.conversation_repository import ConversationRepository
+from src.domain.lead.port.lead_repository import LeadRepository
+from src.domain.message.port.message_repository import MessageRepository
 
 
 def verify():
@@ -54,7 +56,7 @@ def process_message():
 
             ### Method ###
             # mark_read_user_message()
-            message = MessageFirebaseRepository().get_message(message_id)
+            message = MessageRepository().get_message(message_id)
             message.update({"seen": True})
 
             print(f"Message {message_id} was read.")
@@ -128,11 +130,21 @@ def send_template_message():
         )
 
         db_content = get_template_message_content(message.template)
-        MessageFirebaseRepository().create_chat_message(
-            from_id,
-            message.to_number,
-            db_content,
-            message_id=call["body"]["messages"][0]["id"],
+
+        contact_ref = LeadRepository().get_or_create_contact(
+            from_whatsapp_id=from_id, phone_number=message.to_number
+        )
+        conversation_ref = ConversationRepository().get_or_create_conversation(
+            contact_ref=contact_ref
+        )
+
+        MessageRepository().create_chat_message(
+            contact_ref=contact_ref,
+            conversation_ref=conversation_ref,
+            message=db_content,
+            phone_number=message.to_number,
+            wa_id=call["body"]["messages"][0]["id"],
+            ws_id=from_id,
         )
 
         return (
@@ -186,6 +198,8 @@ def send_massive_message():
 
     messages = []
     for user in users:
+        user = str(user)
+
         if not user.isdigit():
             continue
         msg = TemplateMessage(template=template, to_number=user, code=language_code)
@@ -198,7 +212,23 @@ def send_massive_message():
         db_content = get_template_message_content(msg.template)
         if not template:
             db_content = msg.text
-        MessageFirebaseRepository().create_chat_message(
+
+        contact_ref = LeadRepository().get_or_create_contact(
+            from_whatsapp_id=from_id, phone_number=user
+        )
+        conversation_ref = ConversationRepository().get_or_create_conversation(
+            contact_ref=contact_ref
+        )
+
+        MessageRepository().create_chat_message(
+            contact_ref=contact_ref,
+            conversation_ref=conversation_ref,
+            message=db_content,
+            phone_number=user,
+            wa_id=call["body"]["messages"][0]["id"],
+            ws_id=from_id,
+        )
+        MessageRepository().create_chat_message(
             from_id,
             msg.to_number,
             db_content,
@@ -256,11 +286,21 @@ def send_message():
 
         logging.info(call)
         if call["status"] == "success":
-            MessageFirebaseRepository().create_chat_message(
-                from_id,
-                to_number,
-                message.text,
-                message_id=call["body"]["messages"][0]["id"],
+
+            contact_ref = LeadRepository().get_or_create_contact(
+                from_whatsapp_id=from_id, phone_number=to_number
+            )
+            conversation_ref = ConversationRepository().get_or_create_conversation(
+                contact_ref=contact_ref
+            )
+
+            MessageRepository().create_chat_message(
+                contact_ref=contact_ref,
+                conversation_ref=conversation_ref,
+                message=message.text,
+                phone_number=to_number,
+                wa_id=call["body"]["messages"][0]["id"],
+                ws_id=from_id,
             )
 
         return jsonify({"status": "ok", "message": "Mensaje enviado con éxito"}), 200
