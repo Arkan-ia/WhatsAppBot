@@ -59,9 +59,11 @@ class ChatWithLeadService:
         agent_response = self.__chat_repository.chat_with_customer(chat, messages)
 
         reply_message: Message = TextMessage()
-        reply_message.content = agent_response
+        reply_message.content = agent_response.content
         reply_message.sender = sender
         reply_message.to = chat.lead.phone_number
         reply_message.message_id = chat.message_id
+        reply_message.metadata = agent_response.to_dict()
         self.__message_repository.send_single_message(reply_message)
+        # self.__message_repository.save_message(reply_message, "assistant", "whatsapp")
         return "Ok", 200

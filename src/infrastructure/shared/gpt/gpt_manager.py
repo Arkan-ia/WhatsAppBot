@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from unittest.mock import MagicMock
 
 from injector import Injector, Module, inject, singleton
 
 from src.data.models.chatbot import ChatbotModel
 from src.data.sources.firebase import chat_configs
+from src.domain.chat.port.chat_repository import AgentResponse
 from src.infrastructure.shared.logger.logger import LogAppManager
 from src.data.sources.firebase.chat_configs import chatbot_configs
+
 
 from src.infrastructure.shared.messaging.mesaging_manager import MessagingManager
 from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
@@ -26,7 +28,7 @@ class GPTManager(ABC):
     @abstractmethod
     def process_messages(
         self, messages: List[str], query: str, gpt_id: str, relevant_promt_data: str
-    ) -> str:
+    ) -> AgentResponse:
         pass
 
     @abstractmethod
@@ -81,7 +83,7 @@ class OpenAIGPTManager(GPTManager):
 
     def process_messages(
         self, messages: List[str], query: str, gpt_id: str, relevant_promt_data: str
-    ) -> str:
+    ) -> AgentResponse:
         vector_store = self.__vector_stores[gpt_id]
         if vector_store == None:
             self.__logger.error(f"No vector store found for GPT with ID: {gpt_id}")
@@ -109,7 +111,8 @@ class OpenAIGPTManager(GPTManager):
             messages = [{"role": "system", "content": system_prompt}, *messages]
             response = self.generate_answer(messages, gpt_id)
             self.__logger.debug(f"Answer from gpt: {response}")
-            return response.content
+
+            return response
         except Exception as e:
             self.__logger.error(f"Error processing request: {str(e)}")
             raise e
@@ -117,19 +120,34 @@ class OpenAIGPTManager(GPTManager):
     def set_tools(self, tools: List[Any]) -> None:
         self.__tools = tools
 
-    def generate_answer(self, messages: List[str], gpt_id: str) -> str:
+    def generate_answer(self, messages: List[str], gpt_id: str) -> AgentResponse:
         try:
             model = self.__agent_configs[gpt_id]["model"]
             max_tokens = self.__agent_configs[gpt_id]["max_tokens"]
             temperature = self.__agent_configs[gpt_id]["temperature"]
-            response = self.__client.chat.completions.create(
+            res = self.__client.chat.completions.create(
                 model=model,
                 messages=messages,
                 tools=self.__tools,
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-            return response.choices[0].message
+
+            response = res.choices[0].message
+            tool_cals, tool_call_id, function_name, function_response = (
+                self.__get_response_metadata(response)
+            )
+
+            return AgentResponse(
+                content=response.content,
+                role=response.role,
+                tool_calls=tool_cals,
+                tool_call_id=tool_call_id,
+                function_name=function_name,
+                function_response=function_response,
+                message_id=res.id,
+            )
+
         except Exception as e:
             self.__logger.error(
                 f"Error generating answer: {str(e)}",
@@ -138,6 +156,23 @@ class OpenAIGPTManager(GPTManager):
                 f"temperature:{temperature}",
             )
             raise e
+
+    def __get_response_metadata(self, response) -> Tuple[List[str], str, str, str]:
+        tool_calls = []
+        tool_call_id = None
+        function_name = None
+        function_response = None
+
+        # TODO: Test manually this part
+        if hasattr(response, "tool_calls") and response.tool_calls:
+            tool_calls = [tool["type"] for tool in response.tool_calls]
+            tool_call_id = response.tool_calls[0].get("id", None)
+            function_name = response.tool_calls[0]["function"].get("name", None)
+            function_response = response.tool_calls[0]["function"].get(
+                "arguments", None
+            )
+
+        return tool_calls, tool_call_id, function_name, function_response
 
 
 MockGPTManager = MagicMock()

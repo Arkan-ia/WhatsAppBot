@@ -103,6 +103,15 @@ La promo es hasta el 15 de enero. 🛒""",
             contact_ref.set({"ws_id": message.to})
 
         message_ref: DocumentReference = business_doc.collection("messages").document()
+        message_metadata = {
+            "role": message.metadata.get("role", None),
+            "content": message.metadata.get("content", None),
+            "tool_calls": message.metadata.get("tool_calls", None),
+            "tool_call_id": message.metadata.get("tool_call_id", None),
+            "function_name": message.metadata.get("function_name", None),
+            "function_response": message.metadata.get("function_response", None),
+            "message_id": message.message_id,
+        }
         message_ref.set(
             {
                 "content": message.content,
@@ -110,6 +119,7 @@ La promo es hasta el 15 de enero. 🛒""",
                 "timestamp": self.__storage.getServerTimestamp(),
                 "role": role,
                 "contact_ref": contact_ref,
+                **message_metadata,
             }
         )
 
