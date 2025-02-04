@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import json
 import os
 import sys
+import traceback
 
 from injector import Binder, Module, inject, singleton
 from loguru import logger
@@ -78,7 +79,9 @@ class ConsoleLogAppManager(LogAppManager):
         self.__logger.warning(" ".join(self._parse_message(*message)))
 
     def error(self, *message: any) -> None:
-        self.__logger.error(" ".join(self._parse_message(*message)))
+        self.__logger.error(
+            " ".join(self._parse_message(*message)), traceback.format_exc()
+        )
 
     def set_caller(self, caller: str) -> None:
         self.__caller = caller

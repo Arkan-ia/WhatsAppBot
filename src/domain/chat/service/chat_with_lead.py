@@ -30,7 +30,7 @@ class ChatWithLeadService:
         self.__message_repository = message_repository
 
     def run(self, chat: Chat) -> str:
-        business_id = chat.business.id
+        business_id = "450361964838178"  # chat.business.id
         if not self.__business_repository.exists(business_id):
             raise BusinessNotFoundError(business_id)
 
@@ -44,7 +44,8 @@ class ChatWithLeadService:
             business_id, chat.lead.phone_number, 10
         )
 
-        token = self.__business_repository.get_token_by_id(business_id)
+        # token = self.__business_repository.get_token_by_id(business_id)
+        token = "EAAbvVUm8eMoBO9U5VZCAZBp1QNGeyY9WSDWwso2SAi8W8NKB99DGbPZCAy2FiD5XJTqVv3LdkFNrgsnvBHFiMe4g0Fm3T7Bdfh7gWobdytRgapGku81TcT79GzNsZAbcTuR2lrfMZCZBv3ZCSyaMTZB5AdW7EYioTEo7DA0ZCib9gnnvImUnWIyRuZBGZA7MBVnFUuwCzW0vvWsVLC4ljYZBZBzrF01Kk3AZDZD"
         sender: Sender = WhatsAppSender()
         sender.from_token = token
         sender.from_identifier = chat.business.id

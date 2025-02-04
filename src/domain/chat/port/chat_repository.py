@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -10,10 +10,10 @@ from src.domain.message.model.message import Message
 class AgentResponse(BaseModel):
     role: str
     content: str
-    tool_calls: List[str]
-    tool_call_id: str
-    function_name: str
-    function_response: str
+    tool_calls: Optional[List[str]]
+    tool_call_id: Optional[str]
+    function_name: Optional[str]
+    function_response: Optional[str]
     message_id: str
 
     def __str__(self):
