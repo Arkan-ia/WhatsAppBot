@@ -55,14 +55,24 @@ def chat():
     error: Exception
     # Iterate over schemas to check if request is valid and execute action
     # To avoid logging of inccomming request
+    current_schema = None
     for schema in schemas:
         name = schema["name"]
         try:
             command = schema["schema"].load(request.get_json())
-            result = schema["action"](command)
-            return result
+            current_schema = schema
         except Exception as e:
             error_message = f"Error loading {name} schema"
             error = e
 
-    logger.error(error_message, error)
+    # If no one of the schemas is valid, return error
+    if current_schema == None:
+        logger.error(
+            "Error trying to load schema",
+            f"[error_message]:{error_message}",
+            f"[error]:{error}",
+            f"[request]:{request.get_json()}",
+        )
+
+    result = current_schema["action"](command)
+    return result

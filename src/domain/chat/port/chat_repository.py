@@ -10,11 +10,11 @@ from src.domain.message.model.message import Message
 class AgentResponse(BaseModel):
     role: str
     content: str
-    tool_calls: Optional[List[str]]
+    message_id: str
     tool_call_id: Optional[str]
     function_name: Optional[str]
+    tool_calls: Optional[List[str]]
     function_response: Optional[str]
-    message_id: str
 
     def __str__(self):
         return (

@@ -24,6 +24,10 @@ class NoRealtionalDBManager(ABC):
     def getServerTimestamp(self) -> Any:
         pass
 
+    @abstractmethod
+    def getCollectionGroup(self, collection: str) -> Any:
+        pass
+
 
 @singleton
 class FirebaseNoRelationalDBManager(NoRealtionalDBManager):
@@ -44,6 +48,7 @@ class FirebaseNoRelationalDBManager(NoRealtionalDBManager):
     def getRawDocument(
         self, collection: str, document: str
     ) -> firestore.DocumentReference:
+        self.__db.collection_group
         return self.__db.collection(collection).document(document)
 
     def getRawCollection(self, collection: str) -> firestore.CollectionReference:
@@ -51,6 +56,9 @@ class FirebaseNoRelationalDBManager(NoRealtionalDBManager):
 
     def getServerTimestamp(self) -> Any:
         return firestore.SERVER_TIMESTAMP
+
+    def getCollectionGroup(self, collection):
+        return self.__db.collection_group(collection)
 
 
 class NoRelationalDBModule(Module):

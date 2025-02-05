@@ -80,7 +80,7 @@ class ConsoleLogAppManager(LogAppManager):
 
     def error(self, *message: any) -> None:
         self.__logger.error(
-            " ".join(self._parse_message(*message)), traceback.format_exc()
+            " ".join(self._parse_message(*message)),  # traceback.format_exc()
         )
 
     def set_caller(self, caller: str) -> None:

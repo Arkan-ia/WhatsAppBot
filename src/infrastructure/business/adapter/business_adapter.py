@@ -18,32 +18,41 @@ class BusinessAdapter(BusinessRepository):
         self.__logger.set_caller("BusinessAdapter")
 
     def exists(self, business_id: str) -> bool:
-        business_ref: CollectionReference = (
-            self.__storage.getRawCollection("projects")
-            .where("ws_id", "==", business_id)
-            .limit(1)
-            .get()
-        )
-        bussiness_doc = business_ref[0].reference
-        return bussiness_doc.get().exists
-        # business_ref = self.__storage.getRawDocument("business", business_id)
-        # business_doc = business_ref.get()
+        try:
+            business_ref: CollectionReference = self.__storage.getRawCollection(
+                "business"
+            )
 
-        # return business_doc.exists
+            business_snapshots = (
+                business_ref.where("ws_id", "==", business_id).limit(1).get()
+            )
+            business_ref = business_snapshots[0].reference
+
+            return business_ref.get().exists
+        except Exception as e:
+            self.__logger.info(f"Error has occurred: {e}")
+            return False
 
     def get_token_by_id(self, business_id: str) -> str:
-        business_ref: CollectionReference = (
-            self.__storage.getRawCollection("projects")
-            .where("ws_id", "==", business_id)
-            .limit(1)
-            .get()
-        )
-        if not business_ref:
-            self.__logger.info(f"Business with ref {business_id} was not found")
-            raise Exception(f"Business with ref {message.to} was not found")
+        try:
+            business_snapshots: CollectionReference = (
+                self.__storage.getRawCollection("business")
+                .where("ws_id", "==", business_id)
+                .limit(1)
+                .get()
+            )
+            if not business_snapshots:
+                error_message = f"Business with ref {business_id} was not found"
+                self.__logger.error(error_message)
+                raise Exception(error_message)
 
-        business_doc = business_ref[0].reference
-        return business_doc.get().to_dict()["ws_token"]
+            business_ref = business_snapshots[0].reference
+            return business_ref.get().to_dict()["ws_token"]
+        except Exception as e:
+            self.__logger.error(
+                f"Error has occurred getting token of business with id {business_id}: {e}"
+            )
+            raise e
 
 
 BusinessRepositoryMock = MagicMock()

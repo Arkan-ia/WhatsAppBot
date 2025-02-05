@@ -269,7 +269,7 @@ class ReadMessage(Message[Dict[str, Any]]):
 
     @property
     def metadata(self) -> Dict[str, Any]:
-        return self.__metadata
+        return getattr(self, "__metadata", {})
 
     @metadata.setter
     def metadata(self, metadata: Dict[str, Any]) -> None:

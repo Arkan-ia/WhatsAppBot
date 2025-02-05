@@ -43,7 +43,7 @@ class WhatsAppMessagingManager(MessagingManager):
             self.__logger.debug("Got response from facebook", response.json())
             if response.status_code != 200:
                 raise Exception(
-                    f"Failed to send message. Status code: {response.statuscode}"
+                    "Failed to send message", f"[status_code]:{response.statuscode}"
                 )
 
             return response
@@ -67,12 +67,13 @@ class WhatsAppMessagingManager(MessagingManager):
             self.__logger.debug("Got response from facebook", response.json())
             if response.status_code != 200:
                 raise Exception(
-                    f"Failed to mark message as read. Status code: {response.statuscode}"
+                    "Failed to mark message as read",
+                    f"[status_code]:{response.statuscode}",
                 )
 
             return response
         except Exception as e:
-            self.__logger.error("Error marking message as read", e)
+            self.__logger.error("Error marking message as read", f"[error]:{e}")
             raise e
 
 

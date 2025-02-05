@@ -30,33 +30,34 @@ class ChatWithLeadService:
         self.__message_repository = message_repository
 
     def run(self, chat: Chat) -> str:
-        business_id = "450361964838178"  # chat.business.id
+        business_id = chat.business.id
         if not self.__business_repository.exists(business_id):
             raise BusinessNotFoundError(business_id)
 
+        # TODO validate if exist contact, if its note the case add to db
+        # Also if not exist contac create he conversation
+
         is_reaction_mesage = chat.message_type == MessageType.REACTION
         if is_reaction_mesage:
-            return {
-                "status": "ok",
-            }, 200
+            return "Ok", 200
 
         messages = self.__message_repository.get_messages(
             business_id, chat.lead.phone_number, 10
         )
 
-        # token = self.__business_repository.get_token_by_id(business_id)
-        token = "EAAbvVUm8eMoBO9U5VZCAZBp1QNGeyY9WSDWwso2SAi8W8NKB99DGbPZCAy2FiD5XJTqVv3LdkFNrgsnvBHFiMe4g0Fm3T7Bdfh7gWobdytRgapGku81TcT79GzNsZAbcTuR2lrfMZCZBv3ZCSyaMTZB5AdW7EYioTEo7DA0ZCib9gnnvImUnWIyRuZBGZA7MBVnFUuwCzW0vvWsVLC4ljYZBZBzrF01Kk3AZDZD"
+        token = self.__business_repository.get_token_by_id(business_id)
         sender: Sender = WhatsAppSender()
         sender.from_token = token
         sender.from_identifier = chat.business.id
         message: Message = ReadMessage()
         message.sender = sender
         message.message_id = chat.message_id
+        message.to = chat.lead.phone_number
+        message.content = chat.message
+        message.metadata = {}
 
         self.__message_repository.mark_message_as_read(message)
 
-        # TODO: delete line
-        chat.business.id = business_id
         agent_response = self.__chat_repository.chat_with_customer(chat, messages)
 
         reply_message: Message = TextMessage()
@@ -65,6 +66,9 @@ class ChatWithLeadService:
         reply_message.to = chat.lead.phone_number
         reply_message.message_id = chat.message_id
         reply_message.metadata = agent_response.to_dict()
+        reply_message.message_id = chat.message_id
+
+        self.__message_repository.save_message(message, "user", "whatsapp")
         self.__message_repository.send_single_message(reply_message)
-        # self.__message_repository.save_message(reply_message, "assistant", "whatsapp")
-        return "Ok", 200
+
+        return "ok", 200
