@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 from unittest.mock import MagicMock
 from injector import Module, inject, singleton
 from src.common.open_ai_tools import get_notify_payment_mail_tool
@@ -8,6 +8,9 @@ from src.domain.message.model.message import Message
 from src.domain.message.port.message_repository import MessageRepository
 from src.infrastructure.shared.gpt.gpt_manager import GPTManager
 from src.infrastructure.shared.logger.logger import LogAppManager
+from src.infrastructure.shared.storage.no_relational_db_manager import (
+    NoRealtionalDBManager,
+)
 from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
 
 
@@ -18,11 +21,12 @@ class ChatAdapter(ChatRepository):
         self,
         logger: LogAppManager,
         gpt_manager: GPTManager,
-        message_repository: MessageRepository,
+        no_rel_db: NoRealtionalDBManager,
     ):
         self.__logger = logger
         self.__logger.set_caller("ChatAdapter")
         self.__gpt_manager = gpt_manager
+        self.__storage = no_rel_db
         self.__gpt_manager.set_tools([get_notify_payment_mail_tool()])
 
     def __get_tool_calls(self, obj: Dict[str, Any]):
@@ -63,6 +67,69 @@ class ChatAdapter(ChatRepository):
         except Exception as e:
             self.__logger.error(f"Error generating answer: {str(e)}")
             raise e
+
+    def create(self, chat: Chat, platform: Literal["whatsapp"]) -> Chat:
+        lead_id = chat.lead.phone_number
+        business_id = chat.business.id
+
+        try:
+            contacts_snapshots = (
+                self.__storage.getCollectionGroup("contacts")
+                .where("phone_number", "==", lead_id)
+                .where("ws_id", "==", business_id)
+                .limit(1)
+                .get()
+            )
+            contact_ref = contacts_snapshots[0].reference
+
+            conversation_doc = self.__storage.getRawCollection(
+                "conversations"
+            ).document()
+            conversation_doc.set(
+                {
+                    "contact_ref": contact_ref,
+                    "start_time": self.__storage.getServerTimestamp(),
+                    "platform": platform,
+                    "status": "ongoing",
+                    "intention": "comertial",  # TODO: Replace with gpt interpretation
+                }
+            )
+
+            self.__logger.info(
+                f"Chat created for lead with id {lead_id} and business with id {business_id}",
+                "[method:create_chat]",
+                f"[conversation_ref]: {conversation_doc.id}",
+            )
+        except Exception as e:
+            error_message = f"Error has occurred trying create chat for lead with id {lead_id} and business with id {business_id}: {e}"
+            self.__logger.error(error_message, "[method:create_chat]")
+            raise error_message
+
+    def exists(self, chat):
+        lead_id = chat.lead.phone_number
+        business_id = chat.business.id
+        try:
+            contacts_snapshots = (
+                self.__storage.getCollectionGroup("contacts")
+                .where("phone_number", "==", lead_id)
+                .where("ws_id", "==", business_id)
+                .limit(1)
+                .get()
+            )
+            contact_ref = contacts_snapshots[0].reference
+
+            conversation_snapshots = (
+                self.__storage.getCollectionGroup("conversations")
+                .where("contact_ref", "==", contact_ref)
+                .limit(1)
+                .get()
+            )
+
+            return len(conversation_snapshots) > 0
+        except Exception as e:
+            error_message = f"Error has occurred trying validate if chat exist for lead with id {lead_id} and business with id {business_id}: {e}"
+            self.__logger.error(error_message, "[method:exists]")
+            raise error_message
 
 
 ChatAdapterMock = MagicMock()

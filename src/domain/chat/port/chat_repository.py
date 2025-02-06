@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -41,4 +41,12 @@ class AgentResponse(BaseModel):
 class ChatRepository(ABC):
     @abstractmethod
     def chat_with_customer(self, chat: Chat, messages: List[Message]) -> AgentResponse:
+        pass
+
+    @abstractmethod
+    def create(self, chat: Chat, platform: Literal["whatsapp"]) -> Chat:
+        pass
+
+    @abstractmethod
+    def exists(self, chat: Chat) -> bool:
         pass

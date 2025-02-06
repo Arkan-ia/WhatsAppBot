@@ -22,15 +22,13 @@ class BusinessAdapter(BusinessRepository):
             business_ref: CollectionReference = self.__storage.getRawCollection(
                 "business"
             )
-
             business_snapshots = (
                 business_ref.where("ws_id", "==", business_id).limit(1).get()
             )
-            business_ref = business_snapshots[0].reference
 
-            return business_ref.get().exists
+            return len(business_snapshots) > 0
         except Exception as e:
-            self.__logger.info(f"Error has occurred: {e}")
+            self.__logger.error(f"Error has occurred: {e}")
             return False
 
     def get_token_by_id(self, business_id: str) -> str:

@@ -86,6 +86,12 @@ La promo es hasta el 15 de enero. 🛒""",
     ) -> str:
         lead_id = message.to
         business_id = message.sender.from_identifier
+        message_metadata = {
+            "tool_calls": message.metadata.get("tool_calls", None),
+            "tool_call_id": message.metadata.get("tool_call_id", None),
+            "function_name": message.metadata.get("function_name", None),
+            "function_response": message.metadata.get("function_response", None),
+        }
 
         try:
             contacts_snapshots = (
@@ -105,38 +111,10 @@ La promo es hasta el 15 de enero. 🛒""",
             )
             conversation_ref: DocumentReference = conversation_snapshots[0].reference
 
-            # TODO: impment in other method to create conversation
-            # doesnt_exist_conversation = len(conversation_snapshots) == 0
-            # if doesnt_exist_conversation:
-            #     self.__logger.info(
-            #         f"Creating new conversation for {lead_id} in business {business_id}"
-            #     )
-            #     conversation_ref: DocumentReference = self.__storage.getRawCollection(
-            #         "conversations"
-            #     ).document()
-            #     conversation_ref.set(
-            #         {
-            #             "contact_ref": contact_ref,
-            #             "start_time": self.__storage.getServerTimestamp(),
-            #             "platform": platform,
-            #             "status": "ongoing",
-            #             "intention": "comertial",  # TODO: Replace with gpt interpretation
-            #         }
-            #     )
-            # else:
             message_doc: DocumentReference = conversation_ref.collection(
                 "messages"
             ).document()
 
-            message_metadata = {
-                # "role": message.metadata.get("role", None),
-                # "content": message.metadata.get("content", None),
-                "tool_calls": message.metadata.get("tool_calls", None),
-                "tool_call_id": message.metadata.get("tool_call_id", None),
-                "function_name": message.metadata.get("function_name", None),
-                "function_response": message.metadata.get("function_response", None),
-                # "message_id": message.message_id,
-            }
             message_doc.set(
                 {
                     "content": message.content,

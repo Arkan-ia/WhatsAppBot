@@ -12,6 +12,7 @@ from src.domain.message.service.send_massive import SendMassiveMesageService
 from src.domain.message.service.send_single import SendSingleMesageService
 from src.infrastructure.business.adapter.business_adapter import BusinessModule
 from src.infrastructure.chat.adapter.chat_adapter import ChatModule
+from src.infrastructure.lead.adapter.lead_adapter import LeadModule
 from src.infrastructure.message.adapter.message_adapter import MessageModule
 from src.infrastructure.shared.gpt.gpt_manager import GPTManagerModule
 from src.infrastructure.shared.http.http_manager import HttpManager, HttpModule
@@ -33,6 +34,7 @@ injector = Injector(
         BusinessModule,
         VectorStoreModule,
         GPTManagerModule,
+        LeadModule,
     ]
 )
 
