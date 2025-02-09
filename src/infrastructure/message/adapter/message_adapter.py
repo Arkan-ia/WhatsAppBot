@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import json
 import time
 from typing import List, Literal
 from unittest.mock import MagicMock
@@ -6,6 +7,7 @@ from unittest.mock import MagicMock
 from flask import jsonify
 from injector import Module, inject, singleton
 
+from src.common.utils.google_tasks import create_task, delete_task
 from src.domain.message.model.message import (
     Message,
     Sender,
@@ -151,6 +153,49 @@ La promo es hasta el 15 de enero. 🛒""",
                 "status": "error",
                 "message": f"Error sending message to {message.to} from {sender.from_identifier}",
             }
+
+    def program_later_message(self, message: Message):
+        lead_id = message.to
+        business_id = message.sender.from_identifier
+
+        try:
+            contacts_snapshots: List[DocumentSnapshot] = (
+                self.__storage.getCollectionGroup("contacts")
+                .where("phone_number", "==", lead_id)
+                .where("ws_id", "==", business_id)
+                .limit(1)
+                .get()
+            )
+
+            contact_ref: DocumentReference = contacts_snapshots[0].reference
+
+            contact_snapshot = contact_ref.get()
+            current_task = contact_snapshot.to_dict().get("task", None)
+
+            if current_task:
+                try:
+                    delete_task(current_task)
+                except:
+                    pass
+
+            answer_later_task = create_task(
+                "https://us-central1-innate-tempo-448214-e5.cloudfunctions.net/main/send-message",
+                json.dumps(
+                    {
+                        "to_number": lead_id,
+                        "from_id": business_id,
+                        "token": self.token,
+                        # Crear nuevo endpoint para esto
+                        "message": self.chatbot.generate_answer_from_messages(
+                            ""
+                        ),  # generate answer
+                    }
+                ),
+            )
+
+            contact_ref.update({"task": answer_later_task})
+        except:
+            pass
 
     def send_massive_message(self, messages: List[Message]) -> str:
         all_results = []
