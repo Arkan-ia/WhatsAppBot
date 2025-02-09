@@ -97,5 +97,6 @@ class ChatWithLeadService:
 
         self.__message_repository.save_message(message, "user", "whatsapp")
         self.__message_repository.send_single_message(reply_message)
+        self.__message_repository.program_later_message(reply_message, 1)
 
         return "ok", 200
