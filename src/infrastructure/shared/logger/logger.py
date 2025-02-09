@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import json
 import os
 import sys
+import traceback
 
 from injector import Binder, Module, inject, singleton
 from loguru import logger
@@ -46,7 +47,9 @@ class ConsoleLogAppManager(LogAppManager):
         logger.remove()
         logger.add(
             sys.stderr,
-            format="<level>[{time:YYYY-MM-DD HH:mm:ss}] [{level}] <bold><blue>[{extra[caller]}]</blue></bold>  </level> <green>{message}</green>",
+            format=(
+                "<level>[{time:YYYY-MM-DD HH:mm:ss}] [{level}] <bg #000066><fg #2423b5><bold>[{extra[caller]}]</bold></fg #2423b5></bg #000066> {message} </level>"
+            ),
             level=os.getenv("LOG_LEVEL", "DEBUG"),
             colorize=True,
         )
@@ -76,7 +79,9 @@ class ConsoleLogAppManager(LogAppManager):
         self.__logger.warning(" ".join(self._parse_message(*message)))
 
     def error(self, *message: any) -> None:
-        self.__logger.error(" ".join(self._parse_message(*message)))
+        self.__logger.error(
+            " ".join(self._parse_message(*message)),  # traceback.format_exc()
+        )
 
     def set_caller(self, caller: str) -> None:
         self.__caller = caller

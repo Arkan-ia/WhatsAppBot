@@ -5,6 +5,7 @@ def add_context_to_chatbot(system_prompt, context, user_data) -> str:
         f"Ten en cuenta los datos del usuario: {user_data}"
     )
 
+
 import json
 import logging
 import os

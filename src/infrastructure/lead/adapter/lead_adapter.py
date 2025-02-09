@@ -1,118 +1,99 @@
-from concurrent.futures import ThreadPoolExecutor
-import time
-from typing import List, Literal
 from unittest.mock import MagicMock
-
-from flask import jsonify
 from injector import Module, inject, singleton
-
+from src.domain.lead.model.lead import Lead
 from src.domain.lead.port.lead_repository import LeadRepository
 from src.infrastructure.shared.logger.logger import LogAppManager
-from src.infrastructure.shared.messaging.mesaging_manager import MessagingManager
 from src.infrastructure.shared.storage.no_relational_db_manager import (
     NoRealtionalDBManager,
 )
-from google.cloud.firestore_v1.query_results import QueryResultsList
-from google.cloud.firestore_v1.base_document import DocumentSnapshot
-from google.cloud.firestore_v1.collection import CollectionReference
-from google.cloud.firestore_v1.document import DocumentReference
-
 from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
 
 
 @singleton
 class LeadAdapter(LeadRepository):
-    __batch_size = 20
-    __wait_time_between_batches = 0.001
-
     @inject
-    def __init__(
-        self,
-        messaging_manager: MessagingManager,
-        logger: LogAppManager,
-        no_rel_db: NoRealtionalDBManager,
-    ) -> None:
-        self.__messaging_manager = messaging_manager
+    def __init__(self, logger: LogAppManager, no_rel_db: NoRealtionalDBManager):
         self.__logger = logger
-        self.__logger.set_caller("ConversationAdapter")
+        self.__logger.set_caller("LeadAdapter")
         self.__storage = no_rel_db
 
-
-    def get_or_create_contact(
-        self, phone_number: str, from_whatsapp_id: str
-    ) -> DocumentReference:
-        """
-        Obtiene o crea un contacto en la base de datos.
-
-        Args:
-            phone_number (str): El número de teléfono del contacto.
-
-        Returns:
-            firebase_admin.firestore.DocumentReference: La referencia del contacto.
-        """
-        contacts_query = (
-            self.__storage.db.collection_group("contacts")
-            .where("phone_number", "==", phone_number)
-            .where("ws_id", "==", from_whatsapp_id)
-        )
-        contacts_snapshots = contacts_query.get()
-
-        if not contacts_snapshots:
-            business_query = self.__storage.db.collection("business").where(
-                "ws_id", "==", from_whatsapp_id
+    def exists(self, lead_id: str, business_id: str):
+        try:
+            contacts_snapshots = (
+                self.__storage.getCollectionGroup("contacts")
+                .where("phone_number", "==", lead_id)
+                .where("ws_id", "==", business_id)
+                .get()
             )
-            business_snapshots = business_query.get()
 
-            if not business_snapshots:
-                raise Exception(
-                    f"No hay ningún negocio en Venya vinculado a este número {from_whatsapp_id}"
-                )
+            return len(contacts_snapshots) > 0
+        except Exception as e:
+            self.__logger.error(
+                f"Error has validating if lead with id {lead_id} exist: {e}",
+                "[method:exists]",
+            )
+            return False
+
+    def save(self, lead: Lead, business_id: str):
+        try:
+            business_snapshots = (
+                self.__storage.getRawCollection("business")
+                .where("ws_id", "==", business_id)
+                .get()
+            )
 
             business_ref = business_snapshots[0].reference
-            contact_ref = business_ref.collection("contacts").document()
+            contact_doc = business_ref.collection("contacts").document()
 
-            contact_ref.set({"phone_number": phone_number, "ws_id": from_whatsapp_id})
-
-        else:
-            contact_ref = contacts_snapshots[0].reference
-
-        return contact_ref
-
-    def update_last_message(self, contact_ref, content):
-        contact_ref.update(
-            {
-                "last_message": {
-                    "content": content,
-                    "created_at": self.__storage.getServerTimestamp(),
+            contact_doc.set(
+                {
+                    "phone_number": lead.phone_number,
+                    "ws_id": business_id,
+                    "last_message": {
+                        **lead.last_message,
+                        "created_at": self.__storage.getServerTimestamp(),
+                    },
                 }
-            }
-        )
-    
-    def update_contact(self, ws_id, phone_number, data):
-        """Actualiza los datos de un contacto."""
-        try:
-            if len(phone_number) != 12:
-                raise Exception(
-                    "Los números a consultar deben tener su respectivo codigo de país"
-                )
+            )
+        except Exception as e:
+            message_error = f"Error has occurred trying to save lead with id {lead.id} with business id {business_id}: {e}"
+            self.__logger.error(
+                message_error,
+                "[method:save]",
+            )
+            raise message_error
 
-            contact_query = (
+    def update(self, lead: Lead, business_id: str):
+        phone_number = lead.phone_number
+        try:
+            contact_snapshots = (
                 self.__storage.db.collection_group("contacts")
-                .where("ws_id", "==", ws_id)
+                .where("ws_id", "==", business_id)
                 .where("phone_number", "==", phone_number)
                 .limit(1)
+                .get()
             )
 
-            contact_snapshots = contact_query.get()
-            contact_snapshots[0].reference.update(data)
-            
+            contact_snapshots[0].reference.update(
+                {
+                    "display_name": lead.name,
+                    "email": lead.email,
+                    "purchase_count": lead.purchase_count,
+                    "ws_id": business_id,
+                    "phone_number": phone_number,
+                    "last_message": lead.last_message,
+                    "citizen_id": lead.citizen_id,
+                    "address": lead.address,
+                    "city": lead.city,
+                }
+            )
+
             return contact_snapshots[0].get()
 
         except Exception as e:
-            self.__logger.error(
-                 f"Error al actualizar datos del contacto {phone_number} para {ws_id}: {str(e)}"
-             )            
-            raise
+            error_message = f"Error has occurred trying to update lead with id {lead.id} with business id {business_id}: {e}"
+            self.__logger.error(error_message)
+            raise error_message
 
 
 LeadRepositoryMock = MagicMock()

@@ -1,5 +1,7 @@
 from enum import Enum
 
+from src.domain.business.model.business import Business
+from src.domain.lead.model.lead import Lead
 from src.domain.message.model.message import Sender
 
 
@@ -30,12 +32,20 @@ class Chat:
         self.__status = status
 
     @property
-    def sender(self) -> Sender:
-        return self.__sender
+    def business(self) -> Business:
+        return self.__business
 
-    @sender.setter
-    def sender(self, sender: Sender) -> None:
-        self.__sender = sender
+    @business.setter
+    def business(self, business: Business) -> None:
+        self.__business = business
+
+    @property
+    def lead(self) -> Lead:
+        return self.__lead
+
+    @lead.setter
+    def lead(self, lead: Lead) -> None:
+        self.__lead = lead
 
     @property
     def message_type(self) -> MessageType:
@@ -44,3 +54,11 @@ class Chat:
     @message_type.setter
     def message_type(self, message_type: MessageType) -> None:
         self.__message_type = message_type
+
+    @property
+    def message_id(self) -> str:
+        return self.__message_id
+
+    @message_id.setter
+    def message_id(self, message_id: str) -> None:
+        self.__message_id = message_id

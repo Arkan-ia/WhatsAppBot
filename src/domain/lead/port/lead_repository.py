@@ -1,21 +1,16 @@
-from abc import abstractmethod
-from injector import singleton
-from google.cloud.firestore_v1.document import DocumentReference
+from abc import ABC, abstractmethod
+from src.domain.lead.model.lead import Lead
 
 
-@singleton
-class LeadRepository:
+class LeadRepository(ABC):
     @abstractmethod
-    def get_or_create_contact(
-        self, phone_number: str, from_whatsapp_id: str
-    ) -> DocumentReference:
+    def exists(self, lead_id: str, business_id: str) -> bool:
         pass
 
     @abstractmethod
-    def update_last_message(self, contact_ref, content):
+    def save(self, lead: Lead, business_id: str) -> Lead:
         pass
 
     @abstractmethod
-    def update_contact(self, ws_id, phone_number, data):
+    def update(self, lead: Lead, business_id: str) -> Lead:
         pass
-
