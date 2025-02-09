@@ -5,9 +5,9 @@ import datetime
 from google.oauth2 import service_account
 
 
-def create_task(url, payload=None):
+def create_task(url, hours: int, payload=None):
     # Ruta a tu archivo JSON de credenciales
-    credentials_path = "./key.json"
+    credentials_path = "./gcp.json"
 
     # Carga las credenciales
     credentials = service_account.Credentials.from_service_account_file(
@@ -33,7 +33,7 @@ def create_task(url, payload=None):
     if payload:
         task["http_request"]["body"] = payload.encode("utf-8")
 
-    d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+    d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=hours)
     timestamp = timestamp_pb2.Timestamp()
     timestamp.FromDatetime(d)
     task["schedule_time"] = timestamp
@@ -45,7 +45,7 @@ def create_task(url, payload=None):
 
 def delete_task(task_name):
     # Ruta a tu archivo JSON de credenciales
-    credentials_path = "./key.json"
+    credentials_path = "./gcp.json"
 
     # Carga las credenciales
     credentials = service_account.Credentials.from_service_account_file(
@@ -58,3 +58,18 @@ def delete_task(task_name):
     # Eliminar la tarea
     client.delete_task(request={"name": task_name})
     print(f"Tarea eliminada: {task_name}")
+
+
+def create_answer_later_task(to_number: str, from_id: str, token: str):
+    create_task(
+        "https://us-central1-innate-tempo-448214-e5.cloudfunctions.net/main/send-message",
+        json.dumps(
+            {
+                "to_number": to_number,
+                "from_id": from_id,
+                "token": token,
+                # Crear nuevo endpoint para esto
+                "message": "Hola, aún te interesan los productos?",  # generate answer
+            }
+        ),
+    )

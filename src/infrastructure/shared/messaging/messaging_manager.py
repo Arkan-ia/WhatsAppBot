@@ -3,18 +3,18 @@ from abc import ABC, abstractmethod
 from injector import Module, inject, singleton
 from requests import Response
 
-from src.domain.message.model.message import Message, Sender
+from src.domain.message.model.message import Message
 from src.infrastructure.shared.http.http_manager import HttpManager
 from src.infrastructure.shared.logger.logger import LogAppManager
 
 
 class MessagingManager(ABC):
     @abstractmethod
-    def send_message(self, message: Message) -> str:
+    def send_message(self, message: Message) -> Response:
         pass
 
     @abstractmethod
-    def mark_message_as_read(self, message: Message) -> str:
+    def mark_message_as_read(self, message: Message) -> Response:
         pass
 
 

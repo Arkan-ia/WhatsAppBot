@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Tuple
 
 from pydantic import BaseModel
 
@@ -49,4 +49,10 @@ class ChatRepository(ABC):
 
     @abstractmethod
     def exists(self, chat: Chat) -> bool:
+        pass
+
+    @abstractmethod
+    def continue_conversation(
+        self, messages: List[Message], business_id: str
+    ) -> Tuple[bool, str]:
         pass
