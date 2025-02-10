@@ -36,7 +36,7 @@ class ChatAdapter(ChatRepository):
             return None
         return None
 
-    def chat_with_customer(self, chat: Chat, messages: List[Message]) -> AgentResponse:
+    def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
         messages_to_send = [
             {
                 "role": m.metadata.get("role"),

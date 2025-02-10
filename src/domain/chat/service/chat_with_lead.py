@@ -85,7 +85,7 @@ class ChatWithLeadService:
 
         self.__message_repository.mark_message_as_read(message)
 
-        agent_response = self.__chat_repository.chat_with_customer(chat, messages)
+        agent_response = self.__chat_repository.chat_with_agent(chat, messages)
 
         reply_message: Message = TextMessage()
         reply_message.content = agent_response.content

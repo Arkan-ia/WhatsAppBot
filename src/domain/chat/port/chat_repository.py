@@ -40,7 +40,7 @@ class AgentResponse(BaseModel):
 
 class ChatRepository(ABC):
     @abstractmethod
-    def chat_with_customer(self, chat: Chat, messages: List[Message]) -> AgentResponse:
+    def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
         pass
 
     @abstractmethod
