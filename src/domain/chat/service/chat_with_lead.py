@@ -40,6 +40,7 @@ class ChatWithLeadService:
     def run(self, chat: Chat) -> str:
         ## TODO: add toll calls to send to bot
         business_id = chat.business.id
+        print(business_id)
 
         is_valid_lead = chat.lead.is_valid_phone_number()
         if not is_valid_lead:
@@ -51,7 +52,9 @@ class ChatWithLeadService:
 
         exists_lead = self.__lead_repository.exists(chat.lead.phone_number, business_id)
         if not exists_lead:
-            self.__logger.info(f"Saving lead {chat.lead.phone_number} and chat")
+            self.__logger.info(
+                f"Saving lead {chat.lead.phone_number} to business {business_id}"
+            )
             chat.lead.last_message = {
                 "content": chat.message,
                 "status": "pending",
@@ -60,6 +63,9 @@ class ChatWithLeadService:
 
         exist_chat = self.__chat_repository.exists(chat)
         if not exist_chat:
+            self.__logger.info(
+                f"Creating chat for lead {chat.lead.phone_number} and business {business_id}"
+            )
             self.__chat_repository.create(chat, "whatsapp")
 
         is_reaction_mesage = chat.message_type == MessageType.REACTION
@@ -97,5 +103,6 @@ class ChatWithLeadService:
 
         self.__message_repository.save_message(message, "user", "whatsapp")
         self.__message_repository.send_single_message(reply_message)
+        self.__message_repository.program_later_message(reply_message, 1)
 
         return "ok", 200

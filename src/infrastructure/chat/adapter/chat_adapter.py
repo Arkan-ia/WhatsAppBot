@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Literal
+import json
+from typing import Any, Dict, List, Literal, Tuple
 from unittest.mock import MagicMock
 from injector import Module, inject, singleton
 from src.common.open_ai_tools import get_notify_payment_mail_tool
@@ -36,8 +37,8 @@ class ChatAdapter(ChatRepository):
             return None
         return None
 
-    def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
-        messages_to_send = [
+    def __parse_messages_to_openai(self, messages: List[Message]):
+        return [
             {
                 "role": m.metadata.get("role"),
                 "content": m.metadata.get("content"),
@@ -48,6 +49,9 @@ class ChatAdapter(ChatRepository):
             }
             for m in messages
         ]
+
+    def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
+        messages_to_send = self.__parse_messages_to_openai(messages)
         messages_to_send.append(
             {
                 "role": "user",
@@ -130,6 +134,22 @@ class ChatAdapter(ChatRepository):
             error_message = f"Error has occurred trying validate if chat exist for lead with id {lead_id} and business with id {business_id}: {e}"
             self.__logger.error(error_message, "[method:exists]")
             raise error_message
+
+    def continue_conversation(
+        self, messages: List[Message], business_id: str
+    ) -> Tuple[bool, str]:
+        messages_to_send = self.__parse_messages_to_openai(messages)
+        try:
+            response = self.__gpt_manager.continue_conversation(
+                messages=messages_to_send, gpt_id=business_id
+            )
+            self.__logger.info("response", response.content)
+            response_json = json.loads(response.content)
+            return response_json.get("should_reply"), response_json.get("message")
+
+        except Exception as e:
+            self.__logger.error(f"Error contunuing conversation: {str(e)}")
+            raise e
 
 
 ChatAdapterMock = MagicMock()

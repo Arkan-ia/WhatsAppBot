@@ -12,7 +12,7 @@ from src.infrastructure.shared.logger.logger import LogAppManager
 from src.data.sources.firebase.chat_configs import chatbot_configs
 
 
-from src.infrastructure.shared.messaging.mesaging_manager import MessagingManager
+from src.infrastructure.shared.messaging.messaging_manager import MessagingManager
 from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
 from src.infrastructure.shared.vectorstore.vector_store_manager import (
     VectorStoreManager,
@@ -39,6 +39,10 @@ class GPTManager(ABC):
     def generate_answer(self, messages: List[str], gpt_id: str) -> str:
         pass
 
+    @abstractmethod
+    def continue_conversation(self, messages: List[str], gpt_id: str) -> AgentResponse:
+        pass
+
 
 @singleton
 class OpenAIGPTManager(GPTManager):
@@ -60,6 +64,14 @@ class OpenAIGPTManager(GPTManager):
             },
             {
                 "business": {"id": "400692489794103", "name": "Gano Excel"},
+                "vectorstore_path": "./vectorstores/juan_gano_excel",
+                "embedding_key": "OpenIA",
+                "max_tokens": 800,
+                "model": "gpt-4o-mini",
+                "temperature": 0.1,
+            },
+            {
+                "business": {"id": "511736975350831", "name": "Kevin"},
                 "vectorstore_path": "./vectorstores/juan_gano_excel",
                 "embedding_key": "OpenIA",
                 "max_tokens": 800,
@@ -124,6 +136,29 @@ class OpenAIGPTManager(GPTManager):
         except Exception as e:
             self.__logger.error(f"Error processing request: {str(e)}")
             raise e
+
+    def continue_conversation(self, messages: List[str], gpt_id: str) -> AgentResponse:
+        continue_conversation_prompt = """
+        La conversación ha acabado porque el usuario no volvió a responder. Analiza el contexto y determina si el usuario mostró interés en una compra o acción específica.
+
+        Retorna un JSON con la siguiente estructura:
+        {
+            "should_reply": boolean,  # true si el usuario mostró interés en comprar o continuar, false si no hay indicios claros de interés.
+            "message": string | null  # Mensaje para reabrir la conversación si corresponde, de lo contrario, null.
+        }
+
+        Consideraciones:
+        - Si el usuario hizo preguntas sobre precios, disponibilidad o mostró intención de compra, devuelve "should_reply": true.
+        - Si la conversación quedó en un punto neutro o sin señales claras de interés, devuelve "should_reply": false.
+        - Si decides reabrir la conversación, hazlo de forma natural y sin presión, por ejemplo, con una pregunta amigable o recordatorio.
+        """
+        messages = [
+            *messages,
+            {"role": "user", "content": continue_conversation_prompt},
+        ]
+        return self.process_messages(
+            messages, continue_conversation_prompt, gpt_id, relevant_promt_data=""
+        )
 
     def set_tools(self, tools: List[Any]) -> None:
         self.__tools = tools

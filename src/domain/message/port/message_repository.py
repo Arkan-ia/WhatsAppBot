@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Literal
 
-from src.domain.message.model.message import Message, Sender
+from src.domain.message.model.message import Message
 
 
 class MessageRepository(ABC):
@@ -32,4 +32,8 @@ class MessageRepository(ABC):
 
     @abstractmethod
     def get_messages(self, business_id: str, lead_id: str, limit: int) -> List[Message]:
+        pass
+
+    @abstractmethod
+    def program_later_message(self, message: Message, hours: int):
         pass

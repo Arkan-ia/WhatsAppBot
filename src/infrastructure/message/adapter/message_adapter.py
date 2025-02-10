@@ -1,11 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
+import json
 import time
-from typing import List, Literal
+from typing import List, Literal, Optional
 from unittest.mock import MagicMock
 
-from flask import jsonify
 from injector import Module, inject, singleton
 
+from src.common.utils.google_tasks import create_task, delete_task
 from src.domain.message.model.message import (
     Message,
     Sender,
@@ -14,7 +15,7 @@ from src.domain.message.model.message import (
 )
 from src.domain.message.port.message_repository import MessageRepository
 from src.infrastructure.shared.logger.logger import LogAppManager
-from src.infrastructure.shared.messaging.mesaging_manager import MessagingManager
+from src.infrastructure.shared.messaging.messaging_manager import MessagingManager
 from src.infrastructure.shared.storage.no_relational_db_manager import (
     NoRealtionalDBManager,
 )
@@ -24,7 +25,6 @@ from google.cloud.firestore_v1.collection import CollectionReference
 from google.cloud.firestore_v1.document import DocumentReference
 
 from src.infrastructure.shared.utils.decorators import flexible_bind_wrapper
-from firebase_admin import firestore
 from google.cloud.firestore_v1.query import CollectionGroup
 
 
@@ -53,7 +53,6 @@ class MessageWhatsAppApiAdapter(MessageRepository):
 
     # TODO: implement getting from db
     def get_template_data(self, business_id: str, template_name: str) -> str:
-        # TODO: get from db
         db = {
             "450361964838178": {
                 "gano_excel_1": """🌟 ¡Gran Lanzamiento de la Línea Fit JM! 🌟
@@ -138,7 +137,10 @@ La promo es hasta el 15 de enero. 🛒""",
         sender = message.sender
         try:
             self.__validate_to(message.to)
-            self.__messaging_manager.send_message(message)
+            response = self.__messaging_manager.send_message(message)
+            if not message.message_id:
+                message.message_id = response.json().get("messages")[0].get("id")
+
             self.save_message(message, "assistant", "whatsapp")
 
             return {
@@ -151,6 +153,44 @@ La promo es hasta el 15 de enero. 🛒""",
                 "status": "error",
                 "message": f"Error sending message to {message.to} from {sender.from_identifier}",
             }
+
+    def program_later_message(self, message: Message, hours: int):
+        lead_id = message.to
+        business_id = message.sender.from_identifier
+        try:
+            contacts_snapshots: List[DocumentSnapshot] = (
+                self.__storage.getCollectionGroup("contacts")
+                .where("phone_number", "==", lead_id)
+                .where("ws_id", "==", business_id)
+                .limit(1)
+                .get()
+            )
+
+            contact_ref: DocumentReference = contacts_snapshots[0].reference
+
+            contact_snapshot = contact_ref.get()
+            current_task = contact_snapshot.to_dict().get("task", None)
+
+            if current_task:
+                try:
+                    delete_task(current_task)
+                except:
+                    pass
+
+            answer_later_task = create_task(
+                "https://7b7b-186-112-62-80.ngrok-free.app/chat/continue-conversation",
+                hours,
+                json.dumps(
+                    {
+                        "business_id": business_id,
+                        "lead_id": lead_id,
+                    }
+                ),
+            )
+
+            contact_ref.update({"task": answer_later_task})
+        except Exception as e:
+            self.__logger.error(f"Error programando el mensaje: {e}")
 
     def send_massive_message(self, messages: List[Message]) -> str:
         all_results = []
@@ -174,7 +214,9 @@ La promo es hasta el 15 de enero. 🛒""",
         # TODO: Save interaction in database
         return self.__messaging_manager.mark_message_as_read(message)
 
-    def get_messages(self, business_id: str, lead_id: str, limit: int) -> List[Message]:
+    def get_messages(
+        self, business_id: str, lead_id: str, limit: int = 10
+    ) -> List[Message]:
         self.__validate_to(lead_id)
         try:
             messages_snapshots = (

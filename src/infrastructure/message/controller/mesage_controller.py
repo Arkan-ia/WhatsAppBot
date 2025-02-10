@@ -45,3 +45,29 @@ def send_massive():
 
     command = SendMassiveMessageCommand().load(form_data)
     return handler_send_massive_message.run(command)
+
+
+
+
+@message_bp.post("/single")
+def send_single():
+    ...
+    # TODO: 1321
+    
+    
+    # form_data: Dict[str, Any] = {
+    #     "token": form["token"],
+    #     "message": form["message"],
+    #     "file": file,
+    #     "from_id": form["from_id"],
+    # }
+
+    # if "parameters" in form:
+    #     try:
+    #         parameters_data = json.loads(request.form["parameters"])
+    #         form_data["parameters"] = parameters_data
+    #     except json.JSONDecodeError:
+    #         return jsonify({"error": "Invalid JSON format for 'parameters'"}), 400
+
+    # command = SendMassiveMessageCommand().load(form_data)
+    # return handler_send_massive_message.run(command)

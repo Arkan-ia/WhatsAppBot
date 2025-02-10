@@ -12,41 +12,44 @@ chatbot_configs = {
         "location": "Bogotá - Colombia",
         "vectorstore_path": "./vectorstores/juan_gano_excel",
         "description": "En Gano Excel, nos dedicamos a la creación de productos con los más altos estándares de calidad en la búsqueda de tu bienestar. Descubre cómo nuestra gama única de productos, puede transformar tu vida.",
-        "personality": "Un hombre de 30 años, con una personalidad muy tranquila y amable.",
+        "personality": "Un hombre de 28 años, con una personalidad extraordinariamente cálida y magnética. Su carisma natural lo convierte en el alma de cualquier lugar, irradiando una alegría auténtica que ilumina a quienes lo rodean. Con una energía vibrante y contagiosa, inspira a otros a sentirse motivados y en sintonía con lo positivo de la vida. Su amabilidad no solo se refleja en sus palabras, sino en sus acciones, siempre dispuesto a ayudar y conectar profundamente con las personas. Es alguien que deja una impresión inolvidable y un rastro de sonrisas dondequiera que vaya.",
         "expressions": [""],
         "tool_calls": {
             "notify_payment_mail": lambda kargs: notify_payment_mail(
-                "jamenesesp@gmail.com",
+                "jmganoexcelventas@hotmail.com",
                 kargs["products"],
                 kargs["price"],
                 kargs["phone_number"],
                 kargs["name"],
                 kargs["cedula"],
                 kargs["address"],
-                kargs["city"]
+                kargs["city"],
+                kargs["email"],
             ),
             # "store_user_data": lambda kargs: store_user_data(
             #     "450361964838178", kargs["phone_number"], kargs
             # ),
         },
-        "tools": [get_notify_payment_mail_tool()], #get_store_user_data_tool(), ],
+        "tools": [get_notify_payment_mail_tool()],  # get_store_user_data_tool(), ],
         "specific_prompt": "Ten muy en cuenta que normalmente los usuarios preguntan por cajas de café."
         """
 Antes de pedir la orden, asegurate de saber exactamente que producto es el o los productos que el usuario quiere.
 
-El usuario puede pagar el pedido cuando llegue o de antemano por nequi a este número: 3229679149
+El usuario puede pagar el pedido cuando llegue o de antemano con la siguientes lineas:
+Nequi a los numeros 3013617502 Dinaluza Galan o 3229679149 Linda Meneses son los unicos numeros validos de linea fit JM
+y la cuenta bancaria de Jorge Andres Meneses CC 1020752571 cuenta Bancolombia # 22149616351
+
 
 Esta es la promoción actual: 
-
-Por la compra de 2 o más cajas de nuestro delicioso café 3 en 1 o Clásico, obtén un precio exclusivo de $84 por caja.
-Promoción válida hasta el 15 de enero.
 
 Si compras de 2 cajas a un precio de $200,000, recibes un obsequio exclusivo a elegir entre:
 Vaso mezclador
 Afeitadora eléctrica
 Plancha portátil para el cabello
 Mini parlante
-Envío completamente gratuito
+
+Si compras mas de 2 cajas, cada caja tiene el precio normal.
+Para envíos de 200.000 en adelante el envío completamente gratuito.
 
 
 ### **Gano Café 3 en 1 (Capuchino):**  
@@ -201,3 +204,4 @@ Nuestro menú lo puedes ver en el archivo proporcionado, cualquier pregunta del 
 }
 
 chatbot_configs["400692489794103"] = chatbot_configs["450361964838178"]
+chatbot_configs["511736975350831"] = chatbot_configs["450361964838178"]

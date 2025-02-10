@@ -86,7 +86,7 @@ register_middlewares(app)
 # app.add_url_rule('/<path:path>', 'main', lambda path: main(request), methods=['GET', 'POST', 'OPTIONS'])
 # app.add_url_rule('/', 'main_root', lambda: main(request), methods=['GET', 'POST', 'OPTIONS'])
 
-# app.register_blueprint(chat_bp)
+app.register_blueprint(chat_bp)
 app.register_blueprint(message_bp)
 app.register_blueprint(webhook_bp)
 app.get("/ping")(lambda: "pong")

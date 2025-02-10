@@ -2,7 +2,8 @@ import json
 import logging
 from typing import Any, Dict
 from src.common.utils.notifications import send_email_notification
-from src.data.sources.firebase.contact_impl import ContactFirebaseRepository
+
+
 def get_notify_payment_mail_tool():
     return {
         "type": "function",
@@ -213,6 +214,6 @@ def store_user_data(ws_id: str, phone_number: str, data: Dict[str, Any] = None):
     Returns:
         None
     """
-    ContactFirebaseRepository().update_contact(ws_id, phone_number, data)
+    # ContactFirebaseRepository().update_contact(ws_id, phone_number, data)
 
     return "Usuario actualizado"
