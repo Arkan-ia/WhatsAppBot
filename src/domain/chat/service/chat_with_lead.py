@@ -15,7 +15,7 @@ from src.domain.message.model.message import (
     WhatsAppSender,
     TextMessage,
 )
-from src.domain.message.port.message_repository import MessageRepository
+from src.domain.message.port.message_repository import MessageRepository, TimeUnits
 from src.infrastructure.shared.logger.logger import LogAppManager
 
 
@@ -40,7 +40,6 @@ class ChatWithLeadService:
     def run(self, chat: Chat) -> str:
         ## TODO: add toll calls to send to bot
         business_id = chat.business.id
-        print(business_id)
 
         is_valid_lead = chat.lead.is_valid_phone_number()
         if not is_valid_lead:
@@ -103,6 +102,8 @@ class ChatWithLeadService:
 
         self.__message_repository.save_message(message, "user", "whatsapp")
         self.__message_repository.send_single_message(reply_message)
-        self.__message_repository.program_later_message(reply_message, 1)
+        self.__message_repository.program_later_message(
+            reply_message, {TimeUnits.HOURS: 1}
+        )
 
         return "ok", 200

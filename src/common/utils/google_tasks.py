@@ -1,11 +1,14 @@
 import json
+from typing import Dict
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
 import datetime
 from google.oauth2 import service_account
 
+from src.domain.message.port.message_repository import TimeUnits
 
-def create_task(url, hours: int, payload=None):
+
+def create_task(url, time: Dict[TimeUnits, int], payload=None):
     # Ruta a tu archivo JSON de credenciales
     credentials_path = "./gcp.json"
 
@@ -32,8 +35,10 @@ def create_task(url, hours: int, payload=None):
 
     if payload:
         task["http_request"]["body"] = payload.encode("utf-8")
-
-    d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=1)
+    timedelta_kwargs = {unit.value: value for unit, value in time.items()}
+    d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+        **timedelta_kwargs
+    )
     timestamp = timestamp_pb2.Timestamp()
     timestamp.FromDatetime(d)
     task["schedule_time"] = timestamp

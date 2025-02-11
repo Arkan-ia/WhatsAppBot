@@ -1,7 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import List, Literal
+from enum import Enum
+from typing import Dict, List, Literal
 
 from src.domain.message.model.message import Message
+
+
+class TimeUnits(Enum):
+    MINUTES = "minutes"
+    HOURS = "hours"
+    SECONDS = "seconds"
 
 
 class MessageRepository(ABC):
@@ -35,5 +42,5 @@ class MessageRepository(ABC):
         pass
 
     @abstractmethod
-    def program_later_message(self, message: Message, hours: int):
+    def program_later_message(self, message: Message, time: Dict[TimeUnits, int]):
         pass

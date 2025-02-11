@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import json
 import time
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from unittest.mock import MagicMock
 
 from injector import Module, inject, singleton
@@ -13,7 +13,7 @@ from src.domain.message.model.message import (
     TextMessage,
     WhatsAppSender,
 )
-from src.domain.message.port.message_repository import MessageRepository
+from src.domain.message.port.message_repository import MessageRepository, TimeUnits
 from src.infrastructure.shared.logger.logger import LogAppManager
 from src.infrastructure.shared.messaging.messaging_manager import MessagingManager
 from src.infrastructure.shared.storage.no_relational_db_manager import (
@@ -154,7 +154,7 @@ La promo es hasta el 15 de enero. 🛒""",
                 "message": f"Error sending message to {message.to} from {sender.from_identifier}",
             }
 
-    def program_later_message(self, message: Message, hours: int):
+    def program_later_message(self, message: Message, time: Dict[TimeUnits, int]):
         lead_id = message.to
         business_id = message.sender.from_identifier
         try:
@@ -179,7 +179,7 @@ La promo es hasta el 15 de enero. 🛒""",
 
             answer_later_task = create_task(
                 "https://7b7b-186-112-62-80.ngrok-free.app/chat/continue-conversation",
-                hours,
+                time,
                 json.dumps(
                     {
                         "business_id": business_id,
