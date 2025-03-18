@@ -1,9 +1,10 @@
+from typing import List
 from injector import inject, singleton
 
 from src.domain.business.model.business import Business
 from src.domain.business.port.business_repository import BusinessRepository
 from src.domain.chat.model.chat import Chat, MessageType
-from src.domain.chat.port.chat_repository import ChatRepository
+from src.domain.chat.port.chat_repository import ActionHandler, ChatRepository
 from src.domain.errors.business_not_found import BusinessNotFoundError
 from src.domain.errors.invalid_phone_number import InvalidPhoneNumberError
 from src.domain.lead.model.lead import Lead
@@ -17,6 +18,7 @@ from src.domain.message.model.message import (
 )
 from src.domain.message.port.message_repository import MessageRepository, TimeUnits
 from src.infrastructure.shared.logger.logger import LogAppManager
+from src.common.utils.notifications import send_email_notification
 
 
 @singleton
@@ -31,11 +33,68 @@ class ChatWithLeadService:
         logger: LogAppManager,
     ) -> None:
         self.__chat_repository = chat_repository
+        action_handlers: List[ActionHandler] = [
+            ActionHandler(
+                name="customer_buy",
+                description="Envía un correo electrónico al dueño del negocio notificando que un cliente quiere pagar.",
+                params={
+                    "products": {
+                        "type": "string",
+                        "description": "Los productos realizados por el cliente.",
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "El precio total del pedido.",
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "description": "El número de teléfono del cliente.",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "El nombre del cliente.",
+                    },
+                    "cedula": {
+                        "type": "string",
+                        "description": "La cédula del cliente.",
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "La dirección del cliente.",
+                    },
+                    "city": {
+                        "type": "string",
+                        "description": "La ciudad del cliente.",
+                    },
+                },
+                required_params=["products", "price", "cedula", "address", "city"],
+                handler=self.handle_customer_buy,
+                reply_to_costumer_message="Gracias por tu compra, ha sido enviada para realizar el envío. Me pondré en contacto contigo para informarte el estado de tu pedio.",
+            ),
+        ]
+        self.__action_handlers = action_handlers
+        self.__chat_repository.set_action_handlers(action_handlers)
         self.__business_repository = business_repository
         self.__message_repository = message_repository
         self.__lead_repository = lead_repository
         self.__logger = logger
         self.__logger.set_caller("ChatWithLeadService")
+
+    @staticmethod
+    def handle_customer_buy(
+        products: str,
+        price: float,
+        phone_number: str = None,
+        name: str = None,
+        cedula: str = None,
+        address: str = None,
+        city: str = None,
+    ):
+        subject = "Nueva solicitud de pago"
+        body = f"Un cliente ha solicitado realizar un pago. Los detalles del cliente son:\n- Precio: {price}\n- Productos: {products}\n- Nombre: {name}\n- Número de teléfono: {phone_number}\n- Cédula: {cedula}\n- Dirección: {address}\n- Ciudad: {city}.\n Por favor revisa tu panel de control en https://arkania.flutterflow.app/chats"
+        send_email_notification(
+            to="kevinskate.kg@gmail.com", message=body, subject=subject
+        )
 
     def run(self, chat: Chat) -> str:
         ## TODO: add toll calls to send to bot
@@ -93,6 +152,16 @@ class ChatWithLeadService:
         agent_response = self.__chat_repository.chat_with_agent(chat, messages)
 
         reply_message: Message = TextMessage()
+        reply_message.tool_call = []
+        # Handle tool calls
+        if agent_response.has_tool_calls:
+            reply_message.tool_call = agent_response.tool_calls
+            for tool_call in agent_response.tool_calls:
+                for handler in self.__action_handlers:
+                    if handler.name == tool_call.name:
+                        agent_response.content = handler.reply_to_costumer_message
+                        handler.handler(**tool_call.arguments)
+
         reply_message.content = agent_response.content
         reply_message.sender = sender
         reply_message.to = chat.lead.phone_number

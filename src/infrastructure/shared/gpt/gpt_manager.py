@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import json
 import time
 from typing import Any, Dict, List, Tuple
 from unittest.mock import MagicMock
@@ -7,7 +8,7 @@ from injector import Injector, Module, inject, singleton
 
 from src.data.models.chatbot import ChatbotModel
 from src.data.sources.firebase import chat_configs
-from src.domain.chat.port.chat_repository import AgentResponse
+from src.domain.chat.port.chat_repository import ActionHandler, AgentResponse, ToolCall
 from src.infrastructure.shared.logger.logger import LogAppManager
 from src.data.sources.firebase.chat_configs import chatbot_configs
 
@@ -32,7 +33,7 @@ class GPTManager(ABC):
         pass
 
     @abstractmethod
-    def set_tools(self, tools: List[Any]) -> None:
+    def set_tools(self, tools: List[ActionHandler]) -> None:
         pass
 
     @abstractmethod
@@ -97,6 +98,7 @@ class OpenAIGPTManager(GPTManager):
         self.__vector_stores = vector_stores
         self.__client = OpenAI()
         self.__tools = []
+        self.__action_handlers = []
 
     def process_message(self, message: str) -> str:
         return message
@@ -160,7 +162,24 @@ class OpenAIGPTManager(GPTManager):
             messages, continue_conversation_prompt, gpt_id, relevant_promt_data=""
         )
 
-    def set_tools(self, tools: List[Any]) -> None:
+    def set_tools(self, action_handlers: List[ActionHandler]) -> None:
+        tools = []
+        for handler in action_handlers:
+            tools.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": handler.name,
+                        "description": handler.description,
+                        "parameters": {
+                            "type": "object",
+                            "properties": handler.params,
+                            "required": handler.required_params,
+                        },
+                    },
+                }
+            )
+        self.__action_handlers = action_handlers
         self.__tools = tools
 
     def generate_answer(self, messages: List[str], gpt_id: str) -> AgentResponse:
@@ -177,18 +196,15 @@ class OpenAIGPTManager(GPTManager):
             )
 
             response = res.choices[0].message
-            tool_cals, tool_call_id, function_name, function_response = (
-                self.__get_response_metadata(response)
-            )
+            has_tool_calls, tool_cals = self.__get_response_metadata(response)
+            print(f"Has tool calls: {has_tool_calls}, tool calls: {tool_cals}")
 
             return AgentResponse(
                 content=response.content,
                 role=response.role,
                 tool_calls=tool_cals,
-                tool_call_id=tool_call_id,
-                function_name=function_name,
-                function_response=function_response,
                 message_id=res.id,
+                has_tool_calls=has_tool_calls,
             )
 
         except Exception as e:
@@ -200,22 +216,26 @@ class OpenAIGPTManager(GPTManager):
             )
             raise e
 
-    def __get_response_metadata(self, response) -> Tuple[List[str], str, str, str]:
+    def __get_response_metadata(self, response) -> Tuple[bool, List[ToolCall]]:
         tool_calls = []
-        tool_call_id = None
-        function_name = None
-        function_response = None
+        has_tool_calls = False
 
         # TODO: Test manually this part
         if hasattr(response, "tool_calls") and response.tool_calls:
-            tool_calls = [tool["type"] for tool in response.tool_calls]
-            tool_call_id = response.tool_calls[0].get("id", None)
-            function_name = response.tool_calls[0]["function"].get("name", None)
-            function_response = response.tool_calls[0]["function"].get(
-                "arguments", None
-            )
+            has_tool_calls = True
+            for tool_call in response.tool_calls:
+                typee = tool_call.type
+                idd = tool_call.id
+                function = tool_call.function
+                name = function.name
+                arguments = function.arguments
+                tool_calls.append(
+                    ToolCall(
+                        name=name, idd=idd, arguments=json.loads(arguments), typee=typee
+                    )
+                )
 
-        return tool_calls, tool_call_id, function_name, function_response
+        return has_tool_calls, tool_calls
 
 
 MockGPTManager = MagicMock()

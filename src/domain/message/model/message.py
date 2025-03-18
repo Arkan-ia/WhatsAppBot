@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-import json
 from typing import Any, Dict, Generic, List, TypeVar
+
+from src.domain.chat.model.tool_call import ToolCall
+
 
 T = TypeVar("T")
 
@@ -82,6 +84,24 @@ class Message(ABC, Generic[T]):
     def metadata(self, metadata: Dict[str, Any]) -> None:
         pass
 
+    @property
+    def tool_call(self) -> List[ToolCall]:
+        pass
+
+    @tool_call.setter
+    @abstractmethod
+    def tool_call(self, tool_call: List[ToolCall]) -> None:
+        pass
+
+    @property
+    def role(self) -> str:
+        pass
+
+    @role.setter
+    @abstractmethod
+    def role(self, role: str) -> None:
+        pass
+
 
 class WhatsAppSender(Sender):
     @property
@@ -141,6 +161,22 @@ class TextMessage(Message[Dict[str, Any]]):
     @metadata.setter
     def metadata(self, metadata: Dict[str, Any]) -> None:
         self.__metadata = metadata
+
+    @property
+    def tool_call(self) -> List[ToolCall]:
+        return self.__tool_call
+
+    @tool_call.setter
+    def tool_call(self, tool_call: List[ToolCall]) -> None:
+        self.__tool_call = tool_call
+
+    @property
+    def role(self) -> str:
+        return self.__role
+
+    @role.setter
+    def role(self, role: str) -> None:
+        self.__role = role
 
     def get_message(self) -> Dict[str, Any]:
         return {
@@ -274,6 +310,22 @@ class ReadMessage(Message[Dict[str, Any]]):
     @metadata.setter
     def metadata(self, metadata: Dict[str, Any]) -> None:
         self.__metadata = metadata
+
+    @property
+    def tool_call(self) -> List[ToolCall]:
+        return getattr(self, "__tool_call", [])
+
+    @tool_call.setter
+    def tool_call(self, tool_call: List[ToolCall]) -> None:
+        self.__tool_call = tool_call
+
+    @property
+    def role(self) -> str:
+        return self.__role
+
+    @role.setter
+    def role(self, role: str) -> None:
+        self.__role = role
 
     def get_message(self) -> Dict[str, Any]:
         return {

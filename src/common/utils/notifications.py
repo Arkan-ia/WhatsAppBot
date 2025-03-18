@@ -9,12 +9,12 @@ import smtplib
 def send_whatsapp_notification(bot, number: str, message: Dict[str, Any]) -> None:
     """
     Sends a WhatsApp notification to the specified number.
-    
+
     Args:
         bot: WhatsApp bot instance
         number (str): The recipient's phone number
         message (Dict[str, Any]): The message content to send
-        
+
     Returns:
         None
     """
@@ -25,11 +25,10 @@ def send_whatsapp_notification(bot, number: str, message: Dict[str, Any]) -> Non
         logging.error(f"Failed to send notification to {number}: {str(e)}")
 
 
-        
 def send_email_notification(to: str, message: str, subject: str) -> None:
     """
     Sends an email notification to the specified email address.
-    
+
     Args:
         to (str): The recipient's email address
         message (str): The message content to send
@@ -38,19 +37,24 @@ def send_email_notification(to: str, message: str, subject: str) -> None:
         None
     """
     MSG = MIMEMultipart()
-    MSG['From']    = os.getenv("EMAIL_ACCOUNT")
-    MSG['To']      = to
-    MSG['Subject'] = subject
-    MSG.attach(MIMEText(message, 'plain'))
-    password     = os.getenv("EMAIL_PASSWORD")
-    
+    account = os.getenv("EMAIL_ACCOUNT")
+    if not account:
+        account = os.getenv("EMAIL_ACCOUNT_S")
+    password = os.getenv("EMAIL_PASSWORD")
+    if not password:
+        password = os.getenv("EMAIL_PASSWORD_S")
+    MSG["From"] = account
+    MSG["To"] = to
+    MSG["Subject"] = subject
+    MSG.attach(MIMEText(message, "plain"))
+
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
-    
-        server.login(MSG['From'], password=password)
-        
-        server.sendmail(MSG['From'], MSG['To'], MSG.as_string())
+
+        server.login(MSG["From"], password=password)
+
+        server.sendmail(MSG["From"], MSG["To"], MSG.as_string())
         server.quit()
         # Implement email notification logic here
         print(f"Email notification sent to {to}")

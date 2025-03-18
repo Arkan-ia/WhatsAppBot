@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 from injector import Module, inject, singleton
 
 from src.common.utils.google_tasks import create_task, delete_task
+from src.domain.chat.port.chat_repository import ToolCall
 from src.domain.message.model.message import (
     Message,
     Sender,
@@ -85,11 +86,13 @@ La promo es hasta el 15 de enero. 🛒""",
     ) -> str:
         lead_id = message.to
         business_id = message.sender.from_identifier
+        db_tool_calls = []
+        tool_calls: List[ToolCall] = message.tool_call
+        for tool_call in tool_calls:
+            db_tool_calls.append(tool_call.to_dict())
+
         message_metadata = {
-            "tool_calls": message.metadata.get("tool_calls", None),
-            "tool_call_id": message.metadata.get("tool_call_id", None),
-            "function_name": message.metadata.get("function_name", None),
-            "function_response": message.metadata.get("function_response", None),
+            "tool_calls": db_tool_calls,
         }
 
         try:
@@ -234,15 +237,10 @@ La promo es hasta el 15 de enero. 🛒""",
                 db_message = db_message.to_dict()
                 sender: Sender = WhatsAppSender()
                 sender.from_identifier = business_id
+
                 message: Message = TextMessage()
-                message.metadata = {
-                    "role": db_message.get("role"),
-                    "content": db_message.get("content"),
-                    "tool_calls": db_message.get("tool_calls"),
-                    "tool_call_id": db_message.get("tool_call_id"),
-                    "function_name": db_message.get("function_name"),
-                    "function_response": db_message.get("function_response"),
-                }
+                message.role = db_message.get("role")
+                message.tool_call = db_message.get("tool_calls")
                 message.content = db_message.get("content")
                 message.to = db_message.get("phone_number")
                 message.message_id = db_message.get("wa_id")

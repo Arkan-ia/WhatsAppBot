@@ -28,7 +28,6 @@ class ChatAdapter(ChatRepository):
         self.__logger.set_caller("ChatAdapter")
         self.__gpt_manager = gpt_manager
         self.__storage = no_rel_db
-        self.__gpt_manager.set_tools([get_notify_payment_mail_tool()])
 
     def __get_tool_calls(self, obj: Dict[str, Any]):
         if obj.get("tool_calls") is not None:
@@ -38,17 +37,34 @@ class ChatAdapter(ChatRepository):
         return None
 
     def __parse_messages_to_openai(self, messages: List[Message]):
-        return [
-            {
-                "role": m.metadata.get("role"),
-                "content": m.metadata.get("content"),
-                "function_call": m.metadata.get("function_call"),
-                "function_name": m.metadata.get("function_name"),
-                "function_response": m.metadata.get("function_response"),
-                "tool_calls": self.__get_tool_calls(m.metadata),
+        parsed_messages = []
+        for message in messages:
+            tc = message.tool_call
+            message = {
+                "role": message.role,
+                "content": message.content,
             }
-            for m in messages
-        ]
+            tool_messages = []
+            if tc is not None and len(tc) > 0:
+                message["tool_calls"] = tc
+                for tool_call in tc:
+                    tool_messages.append(
+                        {
+                            "role": "tool",
+                            "content": "tool_call.content",
+                            "tool_call_id": tool_call.get("id", ""),
+                            "name": tool_call.get("function", {"name": ""}).get(
+                                "name", ""
+                            ),
+                        }
+                    )
+            parsed_messages.append(message)
+            if len(tool_messages) > 0:
+                parsed_messages.extend(tool_messages)
+        return parsed_messages
+
+    def set_action_handlers(self, action_handlers):
+        self.__gpt_manager.set_tools(action_handlers)
 
     def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
         messages_to_send = self.__parse_messages_to_openai(messages)
