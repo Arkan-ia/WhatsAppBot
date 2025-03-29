@@ -79,6 +79,14 @@ class OpenAIGPTManager(GPTManager):
                 "model": "gpt-4o-mini",
                 "temperature": 0.1,
             },
+            {
+                "business": {"id": "527260523813925", "name": "Party Egls"},
+                "vectorstore_path": "./vectorstores/juan_gano_excel",
+                "embedding_key": "OpenIA",
+                "max_tokens": 800,
+                "model": "gpt-4o-mini",
+                "temperature": 0.1,
+            },
         ]
 
         vector_stores = {}

@@ -205,3 +205,4 @@ Nuestro menú lo puedes ver en el archivo proporcionado, cualquier pregunta del 
 
 chatbot_configs["400692489794103"] = chatbot_configs["450361964838178"]
 chatbot_configs["511736975350831"] = chatbot_configs["450361964838178"]
+chatbot_configs["527260523813925"] = chatbot_configs["450361964838178"]
