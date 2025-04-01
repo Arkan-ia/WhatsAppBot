@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import json
+import os
 import time
 from typing import Any, Dict, List, Tuple
 from unittest.mock import MagicMock
@@ -104,7 +105,7 @@ class OpenAIGPTManager(GPTManager):
         self.__logger = logger
         self.__logger.set_caller("OpenAIGPTManager")
         self.__vector_stores = vector_stores
-        self.__client = OpenAI()
+        self.__client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.__tools = []
         self.__action_handlers = []
 

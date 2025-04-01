@@ -4,7 +4,7 @@ from src.common.utils.notifications import send_email_notification
 from src.infrastructure.shared.middlewares.register import register_middlewares
 from src.views.whatsapp_webhook import *
 
-load_dotenv()
+load_dotenv(dotenv_path=".env", override=True)
 from flask import Flask, Request, jsonify
 from flask_cors import CORS
 import pandas as pd
