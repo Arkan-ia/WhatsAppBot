@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import json
 import os
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import MagicMock
 
 from injector import Injector, Module, inject, singleton
@@ -29,7 +29,12 @@ class GPTManager(ABC):
 
     @abstractmethod
     def process_messages(
-        self, messages: List[str], query: str, gpt_id: str, relevant_promt_data: str
+        self,
+        messages: List[str],
+        query: str,
+        gpt_id: str,
+        relevant_promt_data: str,
+        custom_prompt: Optional[str],
     ) -> AgentResponse:
         pass
 
@@ -113,7 +118,12 @@ class OpenAIGPTManager(GPTManager):
         return message
 
     def process_messages(
-        self, messages: List[str], query: str, gpt_id: str, relevant_promt_data: str
+        self,
+        messages: List[str],
+        query: str,
+        gpt_id: str,
+        relevant_promt_data: str,
+        custom_prompt: Optional[str],
     ) -> AgentResponse:
         vector_store = self.__vector_stores[gpt_id]
         if vector_store == None:
@@ -135,6 +145,7 @@ class OpenAIGPTManager(GPTManager):
             # context = " ".join(relevant_sections)
             # print("Context----->", context) # Printed to see whats happening with the "context"
             system_prompt = (
+                f"{custom_prompt}"
                 f"{business_propmt}"
                 # f"Contexto relevante: {context}"
                 f"{relevant_promt_data}"

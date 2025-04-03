@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from unittest.mock import MagicMock
 from injector import Module, inject, singleton
 from src.common.open_ai_tools import get_notify_payment_mail_tool
@@ -66,7 +66,9 @@ class ChatAdapter(ChatRepository):
     def set_action_handlers(self, action_handlers):
         self.__gpt_manager.set_tools(action_handlers)
 
-    def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
+    def chat_with_agent(
+        self, chat: Chat, messages: List[Message], custom_prompt: Optional[str]
+    ) -> AgentResponse:
         messages_to_send = self.__parse_messages_to_openai(messages)
         messages_to_send.append(
             {
@@ -81,6 +83,7 @@ class ChatAdapter(ChatRepository):
                 query=chat.message,
                 gpt_id=chat.business.id,
                 relevant_promt_data="",
+                custom_prompt=custom_prompt,
             )
 
             return response

@@ -46,7 +46,9 @@ class ActionHandler(BaseModel):
 
 class ChatRepository(ABC):
     @abstractmethod
-    def chat_with_agent(self, chat: Chat, messages: List[Message]) -> AgentResponse:
+    def chat_with_agent(
+        self, chat: Chat, messages: List[Message], custom_prompt: Optional[str]
+    ) -> AgentResponse:
         pass
 
     @abstractmethod

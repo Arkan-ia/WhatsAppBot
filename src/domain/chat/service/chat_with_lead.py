@@ -1,10 +1,15 @@
 from typing import List
 from injector import inject, singleton
+import requests
 
 from src.domain.business.model.business import Business
 from src.domain.business.port.business_repository import BusinessRepository
 from src.domain.chat.model.chat import Chat, MessageType
-from src.domain.chat.port.chat_repository import ActionHandler, ChatRepository
+from src.domain.chat.port.chat_repository import (
+    ActionHandler,
+    AgentResponse,
+    ChatRepository,
+)
 from src.domain.errors.business_not_found import BusinessNotFoundError
 from src.domain.errors.invalid_phone_number import InvalidPhoneNumberError
 from src.domain.lead.model.lead import Lead
@@ -149,7 +154,22 @@ class ChatWithLeadService:
 
         self.__message_repository.mark_message_as_read(message)
 
-        agent_response = self.__chat_repository.chat_with_agent(chat, messages)
+        ## TODO: replace with db query to get infor about client and create custom promt
+        agent_response: AgentResponse
+        if chat.business.id == "527260523813925":
+            org_id = "5PyLKbnwpUlTAOdd2QvF"
+            response = requests.post(
+                "https://us-central1-zalee-943c2.cloudfunctions.net/mainpython/organizer",
+                json={"org_id": org_id},
+            )
+            custom_prompt = (
+                f"Los eventos para las gestiones son los siguentes {response.json()}"
+            )
+            agent_response = self.__chat_repository.chat_with_agent(
+                chat, messages, custom_prompt
+            )
+        else:
+            agent_response = self.__chat_repository.chat_with_agent(chat, messages)
 
         reply_message: Message = TextMessage()
         reply_message.tool_call = []
