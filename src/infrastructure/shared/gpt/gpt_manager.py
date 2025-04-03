@@ -67,7 +67,7 @@ class OpenAIGPTManager(GPTManager):
                 "embedding_key": "OpenIA",
                 "max_tokens": 800,
                 "model": "gpt-4o-mini",
-                "temperature": 0.1,
+                "temperature": 0.5,
             },
             {
                 "business": {"id": "400692489794103", "name": "Gano Excel"},
@@ -75,7 +75,7 @@ class OpenAIGPTManager(GPTManager):
                 "embedding_key": "OpenIA",
                 "max_tokens": 800,
                 "model": "gpt-4o-mini",
-                "temperature": 0.1,
+                "temperature": 0.5,
             },
             {
                 "business": {"id": "511736975350831", "name": "Kevin"},
@@ -83,7 +83,7 @@ class OpenAIGPTManager(GPTManager):
                 "embedding_key": "OpenIA",
                 "max_tokens": 800,
                 "model": "gpt-4o-mini",
-                "temperature": 0.1,
+                "temperature": 0.5,
             },
             {
                 "business": {"id": "527260523813925", "name": "Party Egls"},
@@ -91,7 +91,7 @@ class OpenAIGPTManager(GPTManager):
                 "embedding_key": "OpenIA",
                 "max_tokens": 800,
                 "model": "gpt-4o-mini",
-                "temperature": 0.1,
+                "temperature": 0.5,
             },
         ]
 
