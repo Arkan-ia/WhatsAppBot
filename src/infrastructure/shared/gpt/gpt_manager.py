@@ -161,18 +161,18 @@ class OpenAIGPTManager(GPTManager):
 
     def continue_conversation(self, messages: List[str], gpt_id: str) -> AgentResponse:
         continue_conversation_prompt = """
-        La conversación ha acabado porque el usuario no volvió a responder. Analiza el contexto y determina si el usuario mostró interés en una compra o acción específica.
+        The conversation has ended because the user did not respond. Analyze the context and determine if the user showed interest in a specific purchase or action.
 
-        Retorna un JSON con la siguiente estructura:
+        Returns a JSON with the following structure:
         {
-            "should_reply": boolean,  # true si el usuario mostró interés en comprar o continuar, false si no hay indicios claros de interés.
-            "message": string | null  # Mensaje para reabrir la conversación si corresponde, de lo contrario, null.
+            "should_reply": boolean,  # true if the user showed interest in buying or continuing, false if there are no clear signs of interest.
+            "message": string | null  # Message to reopen the conversation if it applies, otherwise null.
         }
 
-        Consideraciones:
-        - Si el usuario hizo preguntas sobre precios, disponibilidad o mostró intención de compra, devuelve "should_reply": true.
-        - Si la conversación quedó en un punto neutro o sin señales claras de interés, devuelve "should_reply": false.
-        - Si decides reabrir la conversación, hazlo de forma natural y sin presión, por ejemplo, con una pregunta amigable o recordatorio.
+        Considerations:
+        - If the user made questions about prices, availability, or showed interest in buying, return "should_reply": true.
+        - If the conversation ended in a neutral point or without clear signs of interest, return "should_reply": false.
+        - If you decide to reopen the conversation, do it naturally and without pressure, for example, with a friendly question or reminder.
         """
         messages = [
             *messages,
