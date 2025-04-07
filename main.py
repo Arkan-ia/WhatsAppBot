@@ -15,6 +15,10 @@ from src.infrastructure.message.controller.mesage_controller import message_bp
 from src.infrastructure.webhook.controller.webhook_controller import webhook_bp
 from src.views.whatsapp_webhook import *
 
+from src.infrastructure.shared.middlewares.register import register_middlewares
+
+from werkzeug.wrappers import Response
+
 app = Flask(__name__)
 CORS(app)
 register_middlewares(app)
@@ -90,6 +94,15 @@ app.register_blueprint(chat_bp)
 app.register_blueprint(message_bp)
 app.register_blueprint(webhook_bp)
 app.get("/ping")(lambda: "pong")
+
+
+def main(request):
+    """
+    Función de entrada para Cloud Functions.
+    Se adapta el objeto Request de Cloud Functions a la aplicación WSGI de Flask.
+    """
+    return Response.from_app(app, request.environ)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=8080)
