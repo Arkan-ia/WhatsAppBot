@@ -1,3 +1,4 @@
+import json
 from typing import List
 from injector import inject, singleton
 import requests
@@ -182,17 +183,43 @@ class ChatWithLeadService:
                         agent_response.content = handler.reply_to_costumer_message
                         handler.handler(**tool_call.arguments)
 
-        reply_message.content = agent_response.content
-        reply_message.sender = sender
-        reply_message.to = chat.lead.phone_number
-        reply_message.message_id = chat.message_id
-        reply_message.metadata = agent_response.to_dict()
-        reply_message.message_id = chat.message_id
-
+        # Save the user message first
         self.__message_repository.save_message(message, "user", "whatsapp")
-        self.__message_repository.send_single_message(reply_message)
+
+        try:
+            # Check if the content is a list (multiple messages)
+            json_response = json.loads(agent_response.content)
+            # Send each message individually
+            for msg_content in json_response.get("response"):
+                single_reply = TextMessage()
+                single_reply.content = msg_content
+                single_reply.sender = sender
+                single_reply.to = chat.lead.phone_number
+                single_reply.message_id = chat.message_id
+                single_reply.metadata = agent_response.to_dict()
+                single_reply.tool_call = reply_message.tool_call
+
+                # Send each message separately
+                self.__message_repository.send_single_message(single_reply)
+
+        except json.decoder.JSONDecodeError as e:
+
+            response = agent_response.content
+            single_reply = TextMessage()
+            single_reply.content = response
+            single_reply.sender = sender
+            single_reply.to = chat.lead.phone_number
+            single_reply.message_id = chat.message_id
+            single_reply.metadata = agent_response.to_dict()
+            single_reply.tool_call = reply_message.tool_call
+
+            self.__message_repository.send_single_message(single_reply)
+            self.__logger.error(f"Error decoding JSON: {e}")
+            self.__logger.error(f"Agent response content: {response}")
+
+        # Only program the later message for the last message
         self.__message_repository.program_later_message(
-            reply_message, {TimeUnits.HOURS: 1}
+            single_reply, {TimeUnits.HOURS: 1}
         )
 
         return "ok", 200
