@@ -246,6 +246,7 @@ La promo es hasta el 15 de enero. 🛒""",
                 message.message_id = db_message.get("wa_id")
                 message.sender = sender
 
+                self.__logger.info(f"Message in history: {message.content}")
                 messages.append(message)
 
             return messages
