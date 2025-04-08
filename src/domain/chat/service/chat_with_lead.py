@@ -163,9 +163,7 @@ class ChatWithLeadService:
                 "https://us-central1-zalee-943c2.cloudfunctions.net/mainpython/organizer",
                 json={"org_id": org_id},
             )
-            custom_prompt = (
-                f"Los eventos para las gestiones son los siguentes {response.json()}"
-            )
+            custom_prompt = f"Our following events are the following: {response.json()}"
             agent_response = self.__chat_repository.chat_with_agent(
                 chat, messages, custom_prompt
             )
@@ -185,6 +183,8 @@ class ChatWithLeadService:
 
         # Save the user message first
         self.__message_repository.save_message(message, "user", "whatsapp")
+
+        self.__logger.info(f"Agent response: {agent_response.content}")
 
         try:
             # Check if the content is a list (multiple messages)
